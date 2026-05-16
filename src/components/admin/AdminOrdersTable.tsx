@@ -140,11 +140,10 @@ export default function AdminOrdersTable({ orders }: { orders: OrderRow[] }) {
                     </td>
                     <td className="px-4 py-3">
                       <Link
-                        href={`/order/${order.id}/print`}
-                        target="_blank"
+                        href={`/order/${order.id}`}
                         className="text-xs text-blue-600 hover:underline whitespace-nowrap"
                       >
-                        출력
+                        전체보기
                       </Link>
                     </td>
                   </tr>

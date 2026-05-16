@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ORDER_STATUS_LABELS } from "@/types/order";
-import { startOfDay } from "date-fns";
+import { startOfDay, subDays } from "date-fns";
 import AdminSearch from "@/components/admin/AdminSearch";
 import AdminOrdersTable from "@/components/admin/AdminOrdersTable";
 import { Suspense } from "react";
@@ -11,18 +11,27 @@ import type { FilmItem } from "@/types/order";
 
 export const metadata = { title: "관리자 — 접수 관리" };
 
-interface Props { searchParams: Promise<{ status?: string; search?: string; page?: string }> }
+interface Props { searchParams: Promise<{ status?: string; search?: string; page?: string; date?: string }> }
 
 export default async function AdminOrdersPage({ searchParams }: Props) {
   const session = await getSession();
   if (!session?.isAdmin) redirect("/login");
 
-  const { status, search, page: pageStr } = await searchParams;
+  const { status, search, page: pageStr, date } = await searchParams;
   const page = parseInt(pageStr ?? "1");
   const limit = 50;
 
+  const dateFilter = date === "today"
+    ? { gte: startOfDay(new Date()) }
+    : date === "7d"
+    ? { gte: subDays(new Date(), 7) }
+    : date === "30d"
+    ? { gte: subDays(new Date(), 30) }
+    : undefined;
+
   const where = {
     ...(status ? { status: status as any } : {}),
+    ...(dateFilter ? { createdAt: dateFilter } : {}),
     ...(search ? {
       OR: [
         { uniqueCode: { contains: search, mode: "insensitive" as const } },
@@ -30,6 +39,16 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         { phone: { contains: search } },
       ],
     } : {}),
+  };
+
+  const buildHref = (params: { status?: string; search?: string; date?: string; page?: number }) => {
+    const p = new URLSearchParams();
+    if (params.status) p.set("status", params.status);
+    if (params.search) p.set("search", params.search);
+    if (params.date) p.set("date", params.date);
+    if (params.page && params.page > 1) p.set("page", String(params.page));
+    const qs = p.toString();
+    return `/admin/orders${qs ? `?${qs}` : ""}`;
   };
 
   const today = startOfDay(new Date());
@@ -102,6 +121,32 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         <AdminSearch />
       </Suspense>
 
+      {/* 날짜 필터 */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs text-slate-400 font-medium shrink-0">기간</span>
+        {([
+          { label: "전체", value: undefined },
+          { label: "오늘", value: "today" },
+          { label: "7일", value: "7d" },
+          { label: "30일", value: "30d" },
+        ] as const).map(({ label, value }) => {
+          const active = date === value || (!date && !value);
+          return (
+            <Link
+              key={label}
+              href={buildHref({ status, search, date: value })}
+              className={`text-xs px-3 py-1 rounded-full transition-colors font-medium ${
+                active
+                  ? "bg-slate-900 text-white"
+                  : "bg-white border border-slate-200 text-slate-600 hover:border-slate-400"
+              }`}
+            >
+              {label}
+            </Link>
+          );
+        })}
+      </div>
+
       {/* 상태 필터 탭 (카운트 포함) */}
       <div className="flex gap-2 mb-4 flex-wrap">
         {([undefined, "PENDING", "SHIPPED", "PROCESSING", "DONE", "EXPIRED", "CANCELLED"] as const).map((s) => {
@@ -110,7 +155,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           return (
             <Link
               key={s ?? "all"}
-              href={s ? `/admin/orders?status=${s}` : "/admin/orders"}
+              href={buildHref({ status: s, search, date })}
               className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors font-medium ${
                 active
                   ? "bg-slate-900 text-white"
@@ -129,9 +174,10 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       </div>
 
       {/* 현재 필터/검색 표시 */}
-      {(status || search) && (
-        <div className="flex items-center gap-2 mb-3 text-xs text-slate-500">
+      {(status || search || date) && (
+        <div className="flex items-center gap-2 mb-3 text-xs text-slate-500 flex-wrap">
           <span>검색 결과 {total}건</span>
+          {date && <span className="bg-slate-100 px-2 py-0.5 rounded-full">{{ today: "오늘", "7d": "7일", "30d": "30일" }[date]}</span>}
           {status && <span className="bg-slate-100 px-2 py-0.5 rounded-full">{ORDER_STATUS_LABELS[status]}</span>}
           {search && <span className="bg-slate-100 px-2 py-0.5 rounded-full">"{search}"</span>}
           <Link href="/admin/orders" className="text-slate-400 hover:text-slate-700 underline underline-offset-2">
@@ -149,7 +195,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <Link
               key={p}
-              href={`/admin/orders?page=${p}${status ? `&status=${status}` : ""}${search ? `&search=${search}` : ""}`}
+              href={buildHref({ status, search, date, page: p })}
               className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-medium transition-colors ${
                 page === p ? "bg-slate-900 text-white" : "hover:bg-slate-100 text-slate-600"
               }`}
