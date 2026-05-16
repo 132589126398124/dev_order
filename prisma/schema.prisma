@@ -24,14 +24,9 @@ model Order {
   customerName     String
   phone            String
   email            String
-  filmType         String
-  format           String
-  quantity         Int
-  ei               String?
-  scanType         String
-  process          String
-  pushPull         String      @default("0")
+  filmItems        Json        @default("[]")
   pickupMethod     String
+  deliveryAddress  String?
   notes            String?
   status           OrderStatus @default(PENDING)
   editToken        String?     @unique

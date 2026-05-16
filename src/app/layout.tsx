@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KDL 현상소",
+  title: { default: "KDL 현상소", template: "%s | KDL 현상소" },
   description: "필름 현상 및 스캔 택배 접수 서비스",
 };
 

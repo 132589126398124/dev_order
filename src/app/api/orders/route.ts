@@ -24,25 +24,18 @@ async function verifyRecaptcha(token: string): Promise<boolean> {
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
-
   const allowed = await checkOrderRateLimit(ip);
-  if (!allowed) {
-    return NextResponse.json({ error: "잠시 후 다시 시도해주세요. (시간당 5건 제한)" }, { status: 429 });
-  }
+  if (!allowed) return NextResponse.json({ error: "잠시 후 다시 시도해주세요. (시간당 5건 제한)" }, { status: 429 });
 
   const body = await req.json();
   const parsed = orderSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "입력값을 확인해주세요", details: parsed.error.flatten() }, { status: 400 });
-  }
+  if (!parsed.success) return NextResponse.json({ error: "입력값을 확인해주세요", details: parsed.error.flatten() }, { status: 400 });
 
   const valid = await verifyRecaptcha(parsed.data.recaptchaToken);
-  if (!valid) {
-    return NextResponse.json({ error: "보안 검증에 실패했습니다" }, { status: 400 });
-  }
+  if (!valid) return NextResponse.json({ error: "보안 검증에 실패했습니다" }, { status: 400 });
 
   const session = await getSession();
-  const { recaptchaToken, ...orderData } = parsed.data;
+  const { recaptchaToken, filmItems, ...rest } = parsed.data;
 
   const uniqueCode = generateUniqueCode();
   const editToken = tokenGen();
@@ -50,7 +43,8 @@ export async function POST(req: NextRequest) {
 
   const order = await prisma.order.create({
     data: {
-      ...orderData,
+      ...rest,
+      filmItems: filmItems as any,
       uniqueCode,
       userId: session?.userId ?? null,
       editToken,
@@ -58,40 +52,25 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  let sheetsRowIndex = -1;
   try {
-    sheetsRowIndex = await appendOrderToSheet(order);
-    if (sheetsRowIndex > 0) {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: { sheetsRowIndex },
-      });
-    }
+    await appendOrderToSheet(order);
   } catch (e) {
     console.error("Sheets append failed:", e);
   }
 
   try {
     await sendOrderConfirmation(order.email, order.customerName, order.uniqueCode);
-    if (!session) {
-      await sendEditLink(order.email, order.customerName, order.uniqueCode, editToken);
-    }
+    if (!session) await sendEditLink(order.email, order.customerName, order.uniqueCode, editToken);
   } catch (e) {
     console.error("Email send failed:", e);
   }
 
-  return NextResponse.json({
-    id: order.id,
-    uniqueCode: order.uniqueCode,
-    editToken: session ? null : editToken,
-  });
+  return NextResponse.json({ id: order.id, uniqueCode: order.uniqueCode });
 }
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session?.isAdmin) {
-    return NextResponse.json({ error: "권한 없음" }, { status: 403 });
-  }
+  if (!session?.isAdmin) return NextResponse.json({ error: "권한 없음" }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") ?? "1");
@@ -111,12 +90,7 @@ export async function GET(req: NextRequest) {
   };
 
   const [orders, total] = await Promise.all([
-    prisma.order.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
+    prisma.order.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * limit, take: limit }),
     prisma.order.count({ where }),
   ]);
 

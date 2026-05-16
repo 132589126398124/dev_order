@@ -9,7 +9,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
   if (!order || !order.editTokenExpires || order.editTokenExpires < new Date()) {
     return NextResponse.json({ error: "유효하지 않거나 만료된 링크입니다" }, { status: 404 });
   }
-
   if (["PROCESSING", "DONE", "CANCELLED"].includes(order.status)) {
     return NextResponse.json({ error: "작업이 시작되어 수정이 불가능합니다" }, { status: 403 });
   }
@@ -24,22 +23,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ toke
   if (!order || !order.editTokenExpires || order.editTokenExpires < new Date()) {
     return NextResponse.json({ error: "유효하지 않거나 만료된 링크입니다" }, { status: 404 });
   }
-
   if (["PROCESSING", "DONE", "CANCELLED"].includes(order.status)) {
     return NextResponse.json({ error: "작업이 시작되어 수정이 불가능합니다" }, { status: 403 });
   }
 
   const body = await req.json();
   const parsed = orderSchema.safeParse({ ...body, recaptchaToken: "skip" });
-  if (!parsed.success) {
-    return NextResponse.json({ error: "입력값을 확인해주세요", details: parsed.error.flatten() }, { status: 400 });
-  }
+  if (!parsed.success) return NextResponse.json({ error: "입력값을 확인해주세요" }, { status: 400 });
 
-  const { recaptchaToken, ...updateData } = parsed.data;
+  const { recaptchaToken, filmItems, ...rest } = parsed.data;
 
   const updated = await prisma.order.update({
     where: { id: order.id },
-    data: updateData,
+    data: { ...rest, filmItems: filmItems as any },
   });
 
   return NextResponse.json({ ok: true, uniqueCode: updated.uniqueCode });
