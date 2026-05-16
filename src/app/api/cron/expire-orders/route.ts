@@ -1,0 +1,22 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { subDays } from "date-fns";
+
+export async function GET(req: NextRequest) {
+  const authHeader = req.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const cutoff = subDays(new Date(), 7);
+
+  const result = await prisma.order.updateMany({
+    where: {
+      status: "PENDING",
+      createdAt: { lt: cutoff },
+    },
+    data: { status: "EXPIRED" },
+  });
+
+  return NextResponse.json({ expired: result.count });
+}
