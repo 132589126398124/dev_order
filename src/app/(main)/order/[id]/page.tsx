@@ -6,6 +6,7 @@ import type { FilmItem } from "@/types/order";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import Link from "next/link";
+import AdminStatusSelect from "@/components/admin/AdminStatusSelect";
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -40,9 +41,13 @@ export default async function OrderDetailPage({ params }: Props) {
           <p className="text-xs text-slate-400 mt-1">{format(order.createdAt, "yyyy년 MM월 dd일 HH:mm", { locale: ko })} 접수</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${ORDER_STATUS_COLORS[order.status]}`}>
-            {ORDER_STATUS_LABELS[order.status]}
-          </span>
+          {session?.isAdmin ? (
+            <AdminStatusSelect orderId={order.id} currentStatus={order.status} />
+          ) : (
+            <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${ORDER_STATUS_COLORS[order.status]}`}>
+              {ORDER_STATUS_LABELS[order.status]}
+            </span>
+          )}
         </div>
       </div>
 

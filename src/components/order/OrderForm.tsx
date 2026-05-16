@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { orderSchema, OrderFormData, FilmItem, DEFAULT_FILM_ITEM } from "@/types/order";
 
 declare global {
@@ -171,6 +172,7 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
   const [notes, setNotes] = useState(defaultValues?.notes ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [editSuccess, setEditSuccess] = useState(false);
 
   const updateFilmItem = (index: number, key: keyof FilmItem, value: string | number) => {
     setFilmItems((prev) => prev.map((item, i) => (i === index ? { ...item, [key]: value } : item)));
@@ -235,7 +237,7 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
       }
 
       if (editToken) {
-        alert("수정이 완료되었습니다.");
+        setEditSuccess(true);
         return;
       }
 
@@ -246,6 +248,23 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
       setSubmitting(false);
     }
   };
+
+  if (editSuccess) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-8 text-center">
+        <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 className="text-lg font-bold text-slate-900 mb-2">수정 완료</h2>
+        <p className="text-sm text-slate-500 mb-6">접수 내역이 성공적으로 수정되었습니다.</p>
+        <Link href="/" className="inline-block bg-slate-900 text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-slate-800 transition-colors">
+          홈으로 돌아가기
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">

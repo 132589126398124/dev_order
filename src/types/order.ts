@@ -19,6 +19,10 @@ export const orderSchema = z.object({
   deliveryAddress: z.string().max(200).optional(),
   notes: z.string().max(500).optional(),
   recaptchaToken: z.string().min(1),
+}).superRefine((data, ctx) => {
+  if (data.pickupMethod === "택배" && !data.deliveryAddress?.trim()) {
+    ctx.addIssue({ code: "custom", path: ["deliveryAddress"], message: "반송 주소를 입력해주세요" });
+  }
 });
 
 export type FilmItem = z.infer<typeof filmItemSchema>;

@@ -51,7 +51,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       <AdminSearch />
 
       <div className="flex gap-2 mb-4 flex-wrap">
-        {[undefined, "PENDING", "SHIPPED", "PROCESSING", "DONE", "EXPIRED"].map((s) => (
+        {[undefined, "PENDING", "SHIPPED", "PROCESSING", "DONE", "EXPIRED", "CANCELLED"].map((s) => (
           <Link
             key={s ?? "all"}
             href={s ? `/admin/orders?status=${s}` : "/admin/orders"}
