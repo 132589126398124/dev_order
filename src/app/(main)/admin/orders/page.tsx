@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ORDER_STATUS_LABELS } from "@/types/order";
-import { startOfDay, subDays } from "date-fns";
+import { startOfDay, endOfDay, subDays, format } from "date-fns";
+import { ko } from "date-fns/locale";
 import AdminSearch from "@/components/admin/AdminSearch";
+import AdminDatePicker from "@/components/admin/AdminDatePicker";
 import AdminOrdersTable from "@/components/admin/AdminOrdersTable";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -21,13 +23,17 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
   const page = parseInt(pageStr ?? "1");
   const limit = 50;
 
-  const dateFilter = date === "today"
-    ? { gte: startOfDay(new Date()) }
-    : date === "7d"
-    ? { gte: subDays(new Date(), 7) }
-    : date === "30d"
-    ? { gte: subDays(new Date(), 30) }
-    : undefined;
+  const PRESETS = ["today", "7d", "30d"];
+  const isSpecificDate = !!date && !PRESETS.includes(date);
+  const dateFilter = (() => {
+    if (!date) return undefined;
+    if (date === "today") return { gte: startOfDay(new Date()) };
+    if (date === "7d") return { gte: subDays(new Date(), 7) };
+    if (date === "30d") return { gte: subDays(new Date(), 30) };
+    const d = new Date(date);
+    if (!isNaN(d.getTime())) return { gte: startOfDay(d), lte: endOfDay(d) };
+    return undefined;
+  })();
 
   const where = {
     ...(status ? { status: status as any } : {}),
@@ -122,7 +128,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       </Suspense>
 
       {/* 날짜 필터 */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
         <span className="text-xs text-slate-400 font-medium shrink-0">기간</span>
         {([
           { label: "전체", value: undefined },
@@ -130,7 +136,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           { label: "7일", value: "7d" },
           { label: "30일", value: "30d" },
         ] as const).map(({ label, value }) => {
-          const active = date === value || (!date && !value);
+          const active = !isSpecificDate && (date === value || (!date && !value));
           return (
             <Link
               key={label}
@@ -145,6 +151,10 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
             </Link>
           );
         })}
+        <div className="w-px h-4 bg-slate-200 shrink-0" />
+        <Suspense fallback={null}>
+          <AdminDatePicker currentDate={date} />
+        </Suspense>
       </div>
 
       {/* 상태 필터 탭 (카운트 포함) */}
@@ -177,7 +187,13 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       {(status || search || date) && (
         <div className="flex items-center gap-2 mb-3 text-xs text-slate-500 flex-wrap">
           <span>검색 결과 {total}건</span>
-          {date && <span className="bg-slate-100 px-2 py-0.5 rounded-full">{{ today: "오늘", "7d": "7일", "30d": "30일" }[date]}</span>}
+          {date && (
+            <span className="bg-slate-100 px-2 py-0.5 rounded-full">
+              {isSpecificDate
+                ? (() => { try { return format(new Date(date), "yyyy.MM.dd", { locale: ko }); } catch { return date; } })()
+                : ({ today: "오늘", "7d": "7일", "30d": "30일" } as Record<string, string>)[date]}
+            </span>
+          )}
           {status && <span className="bg-slate-100 px-2 py-0.5 rounded-full">{ORDER_STATUS_LABELS[status]}</span>}
           {search && <span className="bg-slate-100 px-2 py-0.5 rounded-full">"{search}"</span>}
           <Link href="/admin/orders" className="text-slate-400 hover:text-slate-700 underline underline-offset-2">
