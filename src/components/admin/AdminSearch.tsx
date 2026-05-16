@@ -14,6 +14,7 @@ export default function AdminSearch() {
     if (value) params.set("search", value);
     else params.delete("search");
     params.delete("page");
+    params.delete("status");
     router.push(`/admin/orders?${params.toString()}`);
   };
 

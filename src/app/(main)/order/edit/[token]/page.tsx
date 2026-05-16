@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 import OrderForm from "@/components/order/OrderForm";
 import type { FilmItem } from "@/types/order";
 
@@ -10,9 +11,15 @@ interface Props { params: Promise<{ token: string }> }
 export default async function EditOrderPage({ params }: Props) {
   const { token } = await params;
 
-  const order = await prisma.order.findUnique({ where: { editToken: token } });
+  const [order, session] = await Promise.all([
+    prisma.order.findUnique({ where: { editToken: token } }),
+    getSession(),
+  ]);
 
-  if (!order || !order.editTokenExpires || order.editTokenExpires < new Date()) {
+  // 로그인한 회원이 본인 주문이면 토큰 만료 무시
+  const isOwner = session && !session.isAdmin && order?.userId === session.userId;
+
+  if (!order || (!isOwner && (!order.editTokenExpires || order.editTokenExpires < new Date()))) {
     return (
       <main className="max-w-lg mx-auto px-4 py-16 text-center">
         <div className="bg-red-50 border border-red-200 rounded-2xl p-8">

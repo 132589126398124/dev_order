@@ -174,6 +174,30 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [editSuccess, setEditSuccess] = useState(false);
 
+  const clearError = (key: string) =>
+    setErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+
+  const blurValidate = (key: string, value: string) => {
+    const validators: Record<string, () => string | null> = {
+      customerName: () => !value.trim() ? "고객명을 입력해주세요" : null,
+      phone: () => !/^01[0-9]{8,9}$/.test(value) ? "올바른 휴대폰 번호를 입력해주세요 (예: 01012345678)" : null,
+      email: () => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "올바른 이메일을 입력해주세요" : null,
+      deliveryAddress: () => pickupMethod === "택배" && !value.trim() ? "반송 주소를 입력해주세요" : null,
+    };
+    const error = validators[key]?.();
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (error) next[key] = error;
+      else delete next[key];
+      return next;
+    });
+  };
+
   const updateFilmItem = (index: number, key: keyof FilmItem, value: string | number) => {
     setFilmItems((prev) => prev.map((item, i) => (i === index ? { ...item, [key]: value } : item)));
   };
@@ -280,14 +304,21 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelCls}>고객명 *</label>
-            <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} className={inputCls} placeholder="홍길동" />
+            <input
+              value={customerName}
+              onChange={(e) => { setCustomerName(e.target.value); clearError("customerName"); }}
+              onBlur={(e) => blurValidate("customerName", e.target.value)}
+              className={inputCls}
+              placeholder="홍길동"
+            />
             {errors.customerName && <p className="text-xs text-red-500 mt-1">{errors.customerName}</p>}
           </div>
           <div>
             <label className={labelCls}>연락처 *</label>
             <input
               value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 11))}
+              onChange={(e) => { setPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 11)); clearError("phone"); }}
+              onBlur={(e) => blurValidate("phone", e.target.value)}
               inputMode="tel"
               className={inputCls}
               placeholder="01012345678 (하이픈 없이)"
@@ -297,7 +328,14 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
         </div>
         <div>
           <label className={labelCls}>이메일 *</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="example@email.com" />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); clearError("email"); }}
+            onBlur={(e) => blurValidate("email", e.target.value)}
+            className={inputCls}
+            placeholder="example@email.com"
+          />
           {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
         </div>
       </section>
@@ -364,7 +402,8 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
             <label className={labelCls}>반송 주소 *</label>
             <input
               value={deliveryAddress}
-              onChange={(e) => setDeliveryAddress(e.target.value)}
+              onChange={(e) => { setDeliveryAddress(e.target.value); clearError("deliveryAddress"); }}
+              onBlur={(e) => blurValidate("deliveryAddress", e.target.value)}
               className={inputCls}
               placeholder="현상 완료 후 필름/스캔 파일을 받을 주소"
             />

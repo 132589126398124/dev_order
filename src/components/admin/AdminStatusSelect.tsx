@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/types/order";
-import { useRouter } from "next/navigation";
 
 interface Props {
   orderId: string;
@@ -12,7 +11,6 @@ interface Props {
 export default function AdminStatusSelect({ orderId, currentStatus }: Props) {
   const [status, setStatus] = useState(currentStatus);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const onChange = async (newStatus: string) => {
     setLoading(true);
@@ -22,10 +20,7 @@ export default function AdminStatusSelect({ orderId, currentStatus }: Props) {
       body: JSON.stringify({ status: newStatus }),
     });
 
-    if (res.ok) {
-      setStatus(newStatus);
-      router.refresh();
-    }
+    if (res.ok) setStatus(newStatus);
     setLoading(false);
   };
 
