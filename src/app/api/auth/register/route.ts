@@ -1,26 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hashPin, getSession } from "@/lib/auth";
+import { hashPin } from "@/lib/auth";
+import { checkLoginRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
-  const session = await getSession();
-  if (!session?.isAdmin) {
-    return NextResponse.json({ error: "관리자만 계정 생성 가능합니다" }, { status: 403 });
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+  const allowed = await checkLoginRateLimit(ip);
+  if (!allowed) {
+    return NextResponse.json({ error: "잠시 후 다시 시도해주세요." }, { status: 429 });
   }
 
-  const { username, pin } = await req.json();
+  const { username, pin, email } = await req.json();
 
-  if (!username || !pin || typeof pin !== "string" || pin.length !== 6 || !/^\d+$/.test(pin)) {
-    return NextResponse.json({ error: "아이디와 숫자 6자리 PIN을 입력해주세요" }, { status: 400 });
+  if (!username || typeof username !== "string" || username.length < 2 || username.length > 20) {
+    return NextResponse.json({ error: "아이디는 2~20자로 입력해주세요" }, { status: 400 });
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    return NextResponse.json({ error: "아이디는 영문, 숫자, _만 사용 가능합니다" }, { status: 400 });
+  }
+  if (!pin || typeof pin !== "string" || pin.length !== 6 || !/^\d+$/.test(pin)) {
+    return NextResponse.json({ error: "PIN은 숫자 6자리로 입력해주세요" }, { status: 400 });
+  }
+  if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: "올바른 이메일을 입력해주세요" }, { status: 400 });
   }
 
-  const exists = await prisma.user.findUnique({ where: { username } });
-  if (exists) {
+  const existingUsername = await prisma.user.findUnique({ where: { username } });
+  if (existingUsername) {
     return NextResponse.json({ error: "이미 사용 중인 아이디입니다" }, { status: 409 });
   }
 
-  const pinHash = await hashPin(pin);
-  const user = await prisma.user.create({ data: { username, pinHash } });
+  const existingEmail = await prisma.user.findUnique({ where: { email } });
+  if (existingEmail) {
+    return NextResponse.json({ error: "이미 사용 중인 이메일입니다" }, { status: 409 });
+  }
 
-  return NextResponse.json({ ok: true, userId: user.id });
+  const pinHash = await hashPin(pin);
+  await prisma.user.create({ data: { username, pinHash, email } });
+
+  return NextResponse.json({ ok: true });
 }

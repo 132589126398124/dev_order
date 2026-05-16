@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const justRegistered = searchParams.get("registered") === "1";
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
@@ -37,9 +39,14 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <h1 className="text-2xl font-bold mb-2 text-center">로그인</h1>
-        <p className="text-gray-500 text-sm text-center mb-8">
+        <p className="text-gray-500 text-sm text-center mb-6">
           회원 로그인 시 접수 내역 조회 가능
         </p>
+        {justRegistered && (
+          <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-6 text-sm text-green-700 text-center">
+            가입 완료! 아이디와 PIN으로 로그인해주세요
+          </div>
+        )}
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
@@ -77,10 +84,16 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
-          비회원도 접수 가능 —{" "}
-          <a href="/order/new" className="underline">접수 바로가기</a>
-        </p>
+        <div className="mt-6 space-y-2 text-center text-xs text-gray-400">
+          <p>
+            계정이 없으신가요?{" "}
+            <a href="/register" className="underline text-gray-600">회원가입</a>
+          </p>
+          <p>
+            비회원도 접수 가능 —{" "}
+            <a href="/order/new" className="underline">접수 바로가기</a>
+          </p>
+        </div>
       </div>
     </main>
   );
