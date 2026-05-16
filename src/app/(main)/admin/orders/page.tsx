@@ -5,7 +5,7 @@ import { ORDER_STATUS_LABELS } from "@/types/order";
 import { startOfDay, endOfDay, subDays, format } from "date-fns";
 import { ko } from "date-fns/locale";
 import AdminSearch from "@/components/admin/AdminSearch";
-import AdminDatePicker from "@/components/admin/AdminDatePicker";
+import AdminDateRangePicker from "@/components/admin/AdminDateRangePicker";
 import AdminOrdersTable from "@/components/admin/AdminOrdersTable";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -13,25 +13,37 @@ import type { FilmItem } from "@/types/order";
 
 export const metadata = { title: "관리자 — 접수 관리" };
 
-interface Props { searchParams: Promise<{ status?: string; search?: string; page?: string; date?: string }> }
+interface Props {
+  searchParams: Promise<{
+    status?: string;
+    search?: string;
+    page?: string;
+    date?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }>;
+}
 
 export default async function AdminOrdersPage({ searchParams }: Props) {
   const session = await getSession();
   if (!session?.isAdmin) redirect("/login");
 
-  const { status, search, page: pageStr, date } = await searchParams;
+  const { status, search, page: pageStr, date, dateFrom, dateTo } = await searchParams;
   const page = parseInt(pageStr ?? "1");
   const limit = 50;
 
-  const PRESETS = ["today", "7d", "30d"];
-  const isSpecificDate = !!date && !PRESETS.includes(date);
+  const hasRange = !!(dateFrom || dateTo);
+
   const dateFilter = (() => {
+    if (hasRange) {
+      const gte = dateFrom ? startOfDay(new Date(dateFrom)) : undefined;
+      const lte = dateTo ? endOfDay(new Date(dateTo)) : undefined;
+      return { ...(gte ? { gte } : {}), ...(lte ? { lte } : {}) };
+    }
     if (!date) return undefined;
     if (date === "today") return { gte: startOfDay(new Date()) };
     if (date === "7d") return { gte: subDays(new Date(), 7) };
     if (date === "30d") return { gte: subDays(new Date(), 30) };
-    const d = new Date(date);
-    if (!isNaN(d.getTime())) return { gte: startOfDay(d), lte: endOfDay(d) };
     return undefined;
   })();
 
@@ -47,23 +59,32 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
     } : {}),
   };
 
-  const buildHref = (params: { status?: string; search?: string; date?: string; page?: number }) => {
+  const buildHref = (params: {
+    status?: string;
+    search?: string;
+    date?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    page?: number;
+  }) => {
     const p = new URLSearchParams();
     if (params.status) p.set("status", params.status);
     if (params.search) p.set("search", params.search);
     if (params.date) p.set("date", params.date);
+    if (params.dateFrom) p.set("dateFrom", params.dateFrom);
+    if (params.dateTo) p.set("dateTo", params.dateTo);
     if (params.page && params.page > 1) p.set("page", String(params.page));
     const qs = p.toString();
     return `/admin/orders${qs ? `?${qs}` : ""}`;
   };
 
-  const today = startOfDay(new Date());
+  const todayStart = startOfDay(new Date());
 
   const [orders, total, statusGroups, todayCount] = await Promise.all([
     prisma.order.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * limit, take: limit }),
     prisma.order.count({ where }),
     prisma.order.groupBy({ by: ["status" as any], _count: { _all: true } }),
-    prisma.order.count({ where: { createdAt: { gte: today } } }),
+    prisma.order.count({ where: { createdAt: { gte: todayStart } } }),
   ]);
 
   const totalPages = Math.ceil(total / limit);
@@ -84,11 +105,18 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
   }));
 
   const stats = [
-    { label: "오늘 접수", value: todayCount, href: `/admin/orders?status=PENDING`, color: "text-blue-600" },
+    { label: "오늘 접수", value: todayCount, href: "/admin/orders?date=today", color: "text-blue-600" },
     { label: "접수대기", value: statusCounts["PENDING"] ?? 0, href: "/admin/orders?status=PENDING", color: "text-amber-600" },
     { label: "발송확인", value: statusCounts["SHIPPED"] ?? 0, href: "/admin/orders?status=SHIPPED", color: "text-blue-600" },
     { label: "작업중", value: statusCounts["PROCESSING"] ?? 0, href: "/admin/orders?status=PROCESSING", color: "text-violet-600" },
   ];
+
+  const PRESETS = ["today", "7d", "30d"] as const;
+  const isPresetActive = (value?: string) => !hasRange && (date === value || (!date && !value));
+
+  const formatDate = (d: string) => {
+    try { return format(new Date(d), "yyyy.MM.dd", { locale: ko }); } catch { return d; }
+  };
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-8 pb-28">
@@ -98,10 +126,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           <h1 className="text-2xl font-bold text-slate-900">접수 관리</h1>
           <p className="text-sm text-slate-500 mt-0.5">전체 {grandTotal}건</p>
         </div>
-        <Link
-          href="/order/new"
-          className="text-sm border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors"
-        >
+        <Link href="/order/new" className="text-sm border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors">
           + 직접 접수
         </Link>
       </div>
@@ -135,25 +160,22 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           { label: "오늘", value: "today" },
           { label: "7일", value: "7d" },
           { label: "30일", value: "30d" },
-        ] as const).map(({ label, value }) => {
-          const active = !isSpecificDate && (date === value || (!date && !value));
-          return (
-            <Link
-              key={label}
-              href={buildHref({ status, search, date: value })}
-              className={`text-xs px-3 py-1 rounded-full transition-colors font-medium ${
-                active
-                  ? "bg-slate-900 text-white"
-                  : "bg-white border border-slate-200 text-slate-600 hover:border-slate-400"
-              }`}
-            >
-              {label}
-            </Link>
-          );
-        })}
+        ] as const).map(({ label, value }) => (
+          <Link
+            key={label}
+            href={buildHref({ status, search, date: value })}
+            className={`text-xs px-3 py-1 rounded-full transition-colors font-medium ${
+              isPresetActive(value)
+                ? "bg-slate-900 text-white"
+                : "bg-white border border-slate-200 text-slate-600 hover:border-slate-400"
+            }`}
+          >
+            {label}
+          </Link>
+        ))}
         <div className="w-px h-4 bg-slate-200 shrink-0" />
         <Suspense fallback={null}>
-          <AdminDatePicker currentDate={date} />
+          <AdminDateRangePicker dateFrom={dateFrom} dateTo={dateTo} />
         </Suspense>
       </div>
 
@@ -165,7 +187,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           return (
             <Link
               key={s ?? "all"}
-              href={buildHref({ status: s, search, date })}
+              href={buildHref({ status: s, search, date, dateFrom, dateTo })}
               className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors font-medium ${
                 active
                   ? "bg-slate-900 text-white"
@@ -183,15 +205,18 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         })}
       </div>
 
-      {/* 현재 필터/검색 표시 */}
-      {(status || search || date) && (
+      {/* 현재 필터 표시 */}
+      {(status || search || date || dateFrom || dateTo) && (
         <div className="flex items-center gap-2 mb-3 text-xs text-slate-500 flex-wrap">
           <span>검색 결과 {total}건</span>
-          {date && (
+          {hasRange && (
             <span className="bg-slate-100 px-2 py-0.5 rounded-full">
-              {isSpecificDate
-                ? (() => { try { return format(new Date(date), "yyyy.MM.dd", { locale: ko }); } catch { return date; } })()
-                : ({ today: "오늘", "7d": "7일", "30d": "30일" } as Record<string, string>)[date]}
+              {dateFrom ? formatDate(dateFrom) : "~"} ~ {dateTo ? formatDate(dateTo) : "~"}
+            </span>
+          )}
+          {!hasRange && date && (
+            <span className="bg-slate-100 px-2 py-0.5 rounded-full">
+              {({ today: "오늘", "7d": "7일", "30d": "30일" } as Record<string, string>)[date] ?? date}
             </span>
           )}
           {status && <span className="bg-slate-100 px-2 py-0.5 rounded-full">{ORDER_STATUS_LABELS[status]}</span>}
@@ -202,7 +227,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         </div>
       )}
 
-      {/* 테이블 (체크박스 + 일괄변경) */}
+      {/* 테이블 */}
       <AdminOrdersTable orders={serializedOrders} />
 
       {/* 페이지네이션 */}
@@ -211,7 +236,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <Link
               key={p}
-              href={buildHref({ status, search, date, page: p })}
+              href={buildHref({ status, search, date, dateFrom, dateTo, page: p })}
               className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-medium transition-colors ${
                 page === p ? "bg-slate-900 text-white" : "hover:bg-slate-100 text-slate-600"
               }`}
