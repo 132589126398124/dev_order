@@ -285,7 +285,13 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
           </div>
           <div>
             <label className={labelCls}>연락처 *</label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} placeholder="01012345678" />
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 11))}
+              inputMode="tel"
+              className={inputCls}
+              placeholder="01012345678 (하이픈 없이)"
+            />
             {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
           </div>
         </div>

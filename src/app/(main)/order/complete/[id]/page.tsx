@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import type { FilmItem } from "@/types/order";
 
@@ -7,12 +8,34 @@ export const metadata = { title: "접수 완료" };
 
 interface Props { params: Promise<{ id: string }> }
 
+function maskPhone(phone: string): string {
+  if (phone.length < 8) return phone;
+  return phone.slice(0, 3) + "-****-" + phone.slice(-4);
+}
+
+function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!domain) return email;
+  const visible = local.slice(0, 2);
+  return `${visible}${"*".repeat(Math.max(1, local.length - 2))}@${domain}`;
+}
+
 export default async function CompletePage({ params }: Props) {
   const { id } = await params;
-  const order = await prisma.order.findUnique({ where: { id } });
+  const [order, session] = await Promise.all([
+    prisma.order.findUnique({ where: { id } }),
+    getSession(),
+  ]);
   if (!order) notFound();
 
   const filmItems = (order.filmItems ?? []) as FilmItem[];
+  const isOwner = session && (session.isAdmin || order.userId === session.userId);
+
+  const editLinkValid =
+    order.editToken &&
+    order.editTokenExpires &&
+    order.editTokenExpires > new Date() &&
+    !["PROCESSING", "DONE", "CANCELLED"].includes(order.status);
 
   return (
     <main className="max-w-lg mx-auto px-4 py-12">
@@ -35,8 +58,26 @@ export default async function CompletePage({ params }: Props) {
       {/* 주문 요약 */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 mb-4 space-y-3">
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div><p className="text-xs text-slate-400">고객명</p><p className="font-medium text-slate-900">{order.customerName}</p></div>
-          <div><p className="text-xs text-slate-400">수령방법</p><p className="font-medium text-slate-900">{order.pickupMethod}</p></div>
+          <div>
+            <p className="text-xs text-slate-400">고객명</p>
+            <p className="font-medium text-slate-900">{order.customerName}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-400">연락처</p>
+            <p className="font-medium text-slate-900">
+              {isOwner ? order.phone : maskPhone(order.phone)}
+            </p>
+          </div>
+          <div className="col-span-2">
+            <p className="text-xs text-slate-400">이메일</p>
+            <p className="font-medium text-slate-900">
+              {isOwner ? order.email : maskEmail(order.email)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-400">수령방법</p>
+            <p className="font-medium text-slate-900">{order.pickupMethod}</p>
+          </div>
         </div>
         {filmItems.length > 0 && (
           <div>
@@ -52,9 +93,9 @@ export default async function CompletePage({ params }: Props) {
         )}
       </div>
 
-      {/* 발송 방법 선택 */}
+      {/* 필름 동봉 방법 */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 mb-4">
-        <p className="text-sm font-semibold text-slate-700 mb-3">발송 방법을 선택해주세요</p>
+        <p className="text-sm font-semibold text-slate-700 mb-3">필름 동봉 방법을 선택해주세요</p>
         <div className="grid grid-cols-2 gap-3">
           <Link
             href={`/order/${id}/print`}
@@ -75,10 +116,38 @@ export default async function CompletePage({ params }: Props) {
         </div>
       </div>
 
-      <div className="text-xs text-slate-400 text-center space-y-1">
-        <p>비회원 접수 시 수정 링크가 이메일로 발송됩니다 (48시간 유효)</p>
-        <p>작업 시작 전까지 수정 가능합니다</p>
+      {/* 액션 링크 */}
+      <div className="space-y-2">
+        {editLinkValid && (
+          <Link
+            href={`/order/edit/${order.editToken}`}
+            className="flex items-center justify-center w-full border border-slate-200 rounded-2xl py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            접수 내역 수정
+          </Link>
+        )}
+        {!session && (
+          <Link
+            href="/register"
+            className="flex items-center justify-center w-full border border-slate-200 rounded-2xl py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            회원 가입하고 접수 내역 관리하기 →
+          </Link>
+        )}
+        {session && !session.isAdmin && (
+          <Link
+            href="/my/orders"
+            className="flex items-center justify-center w-full border border-slate-200 rounded-2xl py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            내 접수 내역 보기 →
+          </Link>
+        )}
       </div>
+
+      <p className="text-xs text-slate-400 text-center mt-4 space-y-1">
+        <span className="block">비회원 접수 시 수정 링크가 이메일로 발송됩니다 (48시간 유효)</span>
+        <span className="block">작업 시작 전까지 수정 가능합니다</span>
+      </p>
     </main>
   );
 }

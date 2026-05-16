@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import AdminStatusSelect from "@/components/admin/AdminStatusSelect";
 import AdminSearch from "@/components/admin/AdminSearch";
+import { Suspense } from "react";
 import Link from "next/link";
 import type { FilmItem } from "@/types/order";
 
@@ -48,7 +49,9 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         <Link href="/order/new" className="text-sm border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors">+ 직접 접수</Link>
       </div>
 
-      <AdminSearch />
+      <Suspense fallback={<div className="h-10 bg-slate-100 rounded-lg animate-pulse mb-4" />}>
+        <AdminSearch />
+      </Suspense>
 
       <div className="flex gap-2 mb-4 flex-wrap">
         {[undefined, "PENDING", "SHIPPED", "PROCESSING", "DONE", "EXPIRED", "CANCELLED"].map((s) => (
