@@ -29,12 +29,14 @@ export default function AdminStatusSelect({ orderId, currentStatus }: Props) {
     setLoading(false);
   };
 
+  const colorCls = (ORDER_STATUS_COLORS[status] ?? "").replace(/ring-\S+/g, "").trim();
+
   return (
     <select
       value={status}
       onChange={(e) => onChange(e.target.value)}
       disabled={loading}
-      className={`text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer disabled:opacity-50 ${ORDER_STATUS_COLORS[status]}`}
+      className={`text-xs font-medium px-2 py-1 rounded-full border border-transparent cursor-pointer disabled:opacity-50 ${colorCls}`}
     >
       {Object.entries(ORDER_STATUS_LABELS).map(([val, label]) => (
         <option key={val} value={val}>{label}</option>

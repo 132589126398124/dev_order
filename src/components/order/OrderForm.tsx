@@ -28,12 +28,14 @@ function FilmItemRow({
   onChange,
   onRemove,
   canRemove,
+  errors,
 }: {
   item: FilmItem;
   index: number;
   onChange: (index: number, key: keyof FilmItem, value: string | number) => void;
   onRemove: (index: number) => void;
   canRemove: boolean;
+  errors: Record<string, string>;
 }) {
   return (
     <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
@@ -57,9 +59,10 @@ function FilmItemRow({
         <input
           value={item.filmType}
           onChange={(e) => onChange(index, "filmType", e.target.value)}
-          className={inputCls}
+          className={`${inputCls} ${errors.filmType ? "!border-red-300 !bg-red-50" : ""}`}
           placeholder="Kodak Portra 400, Fuji Superia 200 등"
         />
+        {errors.filmType && <p className="text-xs text-red-500 mt-1">{errors.filmType}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -278,16 +281,24 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
       <section className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 space-y-4">
         <h2 className="font-semibold text-slate-900">필름 정보</h2>
         {errors.filmItems && <p className="text-xs text-red-500">{errors.filmItems}</p>}
-        {filmItems.map((item, i) => (
-          <FilmItemRow
-            key={i}
-            item={item}
-            index={i}
-            onChange={updateFilmItem}
-            onRemove={removeFilmItem}
-            canRemove={filmItems.length > 1}
-          />
-        ))}
+        {filmItems.map((item, i) => {
+          const itemErrors = Object.fromEntries(
+            Object.entries(errors)
+              .filter(([k]) => k.startsWith(`filmItems.${i}.`))
+              .map(([k, v]) => [k.replace(`filmItems.${i}.`, ""), v])
+          );
+          return (
+            <FilmItemRow
+              key={i}
+              item={item}
+              index={i}
+              onChange={updateFilmItem}
+              onRemove={removeFilmItem}
+              canRemove={filmItems.length > 1}
+              errors={itemErrors}
+            />
+          );
+        })}
         <button
           type="button"
           onClick={addFilmItem}

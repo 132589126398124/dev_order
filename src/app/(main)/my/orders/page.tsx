@@ -40,7 +40,7 @@ export default async function MyOrdersPage() {
           {orders.map((order) => {
             const items = (order.filmItems ?? []) as FilmItem[];
             return (
-              <div key={order.id} className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4 hover:border-slate-200 transition-colors">
+              <Link key={order.id} href={`/order/${order.id}`} className="block bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4 hover:border-slate-300 hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] transition-all">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-mono font-bold text-slate-900 text-sm">{order.uniqueCode}</p>
@@ -57,7 +57,7 @@ export default async function MyOrdersPage() {
                     {ORDER_STATUS_LABELS[order.status]}
                   </span>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

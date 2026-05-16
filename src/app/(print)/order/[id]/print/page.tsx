@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import type { FilmItem } from "@/types/order";
 import PrintTrigger from "@/components/order/PrintTrigger";
+import ManualPrintButton from "@/components/order/ManualPrintButton";
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -95,12 +96,7 @@ export default async function PrintPage({ params }: Props) {
       </div>
 
       <div className="no-print" style={{ position: "fixed", bottom: 24, right: 24 }}>
-        <button
-          onClick={() => window.print()}
-          style={{ background: "#111", color: "white", border: "none", padding: "10px 20px", borderRadius: 10, cursor: "pointer", fontSize: 14, fontWeight: 600 }}
-        >
-          인쇄
-        </button>
+        <ManualPrintButton />
       </div>
     </>
   );

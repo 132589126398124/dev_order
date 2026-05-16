@@ -81,7 +81,9 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                 const items = (order.filmItems ?? []) as FilmItem[];
                 return (
                   <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs font-bold text-slate-900 whitespace-nowrap">{order.uniqueCode}</td>
+                    <td className="px-4 py-3 font-mono text-xs font-bold text-slate-900 whitespace-nowrap">
+                      <Link href={`/order/${order.id}`} className="hover:text-blue-600 transition-colors">{order.uniqueCode}</Link>
+                    </td>
                     <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">{order.customerName}</td>
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{order.phone}</td>
                     <td className="px-4 py-3 text-slate-600 max-w-[180px]">
