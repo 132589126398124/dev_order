@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0f172a"/>
+  <!-- Film strip left notches -->
+  <rect x="48" y="96" width="40" height="56" rx="8" fill="#334155"/>
+  <rect x="48" y="192" width="40" height="56" rx="8" fill="#334155"/>
+  <rect x="48" y="288" width="40" height="56" rx="8" fill="#334155"/>
+  <rect x="48" y="368" width="40" height="56" rx="8" fill="#334155"/>
+  <!-- Film strip right notches -->
+  <rect x="424" y="96" width="40" height="56" rx="8" fill="#334155"/>
+  <rect x="424" y="192" width="40" height="56" rx="8" fill="#334155"/>
+  <rect x="424" y="288" width="40" height="56" rx="8" fill="#334155"/>
+  <rect x="424" y="368" width="40" height="56" rx="8" fill="#334155"/>
+  <!-- Film body -->
+  <rect x="88" y="64" width="336" height="384" rx="16" fill="#1e293b"/>
+  <!-- Frame -->
+  <rect x="120" y="128" width="272" height="256" rx="12" fill="#0ea5e9" opacity="0.15"/>
+  <!-- Lens circle -->
+  <circle cx="256" cy="256" r="88" fill="none" stroke="#0ea5e9" stroke-width="16" opacity="0.8"/>
+  <circle cx="256" cy="256" r="56" fill="#0ea5e9" opacity="0.3"/>
+  <circle cx="256" cy="256" r="28" fill="#0ea5e9" opacity="0.7"/>
+  <!-- KDL text -->
+  <text x="256" y="460" font-family="system-ui, sans-serif" font-size="48" font-weight="700" text-anchor="middle" fill="#94a3b8">KDL</text>
+</svg>

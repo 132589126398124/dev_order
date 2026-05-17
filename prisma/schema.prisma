@@ -8,12 +8,16 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  pinHash   String
-  email     String   @unique
-  createdAt DateTime @default(now())
-  orders    Order[]
+  id             String   @id @default(cuid())
+  username       String   @unique
+  pinHash        String
+  email          String   @unique
+  createdAt      DateTime @default(now())
+  orders         Order[]
+  profileName    String?
+  profilePhone   String?
+  profileEmail   String?
+  profileAddress String?
 }
 
 model Order {

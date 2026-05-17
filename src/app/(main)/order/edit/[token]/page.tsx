@@ -56,6 +56,7 @@ export default async function EditOrderPage({ params }: Props) {
       </div>
       <OrderForm
         editToken={token}
+        userId={session?.userId}
         defaultValues={{
           customerName: order.customerName,
           phone: order.phone,

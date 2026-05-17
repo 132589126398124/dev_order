@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { updateOrderStatusInSheet } from "@/lib/sheets";
+import { sendStatusNotification } from "@/lib/email";
 import { OrderStatus } from "@prisma/client";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -23,13 +24,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     data: { status },
   });
 
-  if (order.sheetsRowIndex) {
-    try {
-      await updateOrderStatusInSheet(order.sheetsRowIndex, status);
-    } catch (e) {
-      console.error("Sheets update failed:", e);
-    }
-  }
+  await Promise.allSettled([
+    order.sheetsRowIndex
+      ? updateOrderStatusInSheet(order.sheetsRowIndex, status).catch((e) => console.error("Sheets:", e))
+      : Promise.resolve(),
+    sendStatusNotification(order.email, order.customerName, order.uniqueCode, order.id, status).catch((e) =>
+      console.error("Email:", e)
+    ),
+  ]);
 
   return NextResponse.json({ ok: true, status });
 }

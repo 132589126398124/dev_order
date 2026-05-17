@@ -32,7 +32,7 @@ export default async function NewOrderPage() {
             </Link>
           </div>
         )}
-        <OrderForm />
+        <OrderForm userId={session?.userId} />
       </main>
     </>
   );

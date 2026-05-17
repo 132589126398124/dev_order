@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Script from "next/script";
 import { orderSchema, OrderFormData, FilmItem, DEFAULT_FILM_ITEM } from "@/types/order";
+import FilmSearch from "./FilmSearch";
+import type { FilmEntry } from "@/data/films";
 
 declare global {
   interface Window {
@@ -22,17 +24,6 @@ declare global {
 
 const DRAFT_KEY = "film-order-draft";
 
-const FILM_PRESETS = [
-  "Kodak Portra 400",
-  "Kodak Gold 200",
-  "Kodak Ultramax 400",
-  "Fuji Superia 200",
-  "Fuji Pro 400H",
-  "Ilford HP5",
-  "Ilford Delta 3200",
-  "CineStill 800T",
-] as const;
-
 const PROCESS_DESC: Record<string, string> = {
   "C-41": "일반 컬러 네거티브 필름",
   "ECN-2": "시네마 필름 (Kodak Vision3 등)",
@@ -44,11 +35,19 @@ const PROCESS_DESC: Record<string, string> = {
 interface Props {
   defaultValues?: Partial<OrderFormData>;
   editToken?: string;
+  userId?: string;
 }
 
 const inputCls = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400";
 const selectCls = inputCls;
 const labelCls = "block text-sm font-medium text-slate-700 mb-1.5";
+
+interface SavedProfile {
+  profileName?: string | null;
+  profilePhone?: string | null;
+  profileEmail?: string | null;
+  profileAddress?: string | null;
+}
 
 function FilmItemRow({
   item,
@@ -61,12 +60,22 @@ function FilmItemRow({
 }: {
   item: FilmItem;
   index: number;
-  onChange: (index: number, key: keyof FilmItem, value: string | number) => void;
+  onChange: (index: number, key: keyof FilmItem, value: string | number | boolean) => void;
   onRemove: (index: number) => void;
   onDuplicate: (index: number) => void;
   canRemove: boolean;
   errors: Record<string, string>;
 }) {
+  const handleFilmSelect = (film: FilmEntry) => {
+    onChange(index, "filmType", film.name);
+    onChange(index, "process", film.process);
+    if (film.formats.includes(item.format as "135" | "120" | "4x5" | "8x10")) {
+      // keep current format if compatible
+    } else {
+      onChange(index, "format", film.formats[0]);
+    }
+  };
+
   return (
     <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
       <div className="flex items-center justify-between mb-1">
@@ -95,27 +104,11 @@ function FilmItemRow({
 
       <div>
         <label className={labelCls}>필름 종류 *</label>
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {FILM_PRESETS.map((preset) => (
-            <button
-              type="button"
-              key={preset}
-              onClick={() => onChange(index, "filmType", preset)}
-              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                item.filmType === preset
-                  ? "bg-slate-900 text-white border-slate-900"
-                  : "border-slate-200 text-slate-600 hover:border-slate-400 bg-white"
-              }`}
-            >
-              {preset}
-            </button>
-          ))}
-        </div>
-        <input
+        <FilmSearch
           value={item.filmType}
-          onChange={(e) => onChange(index, "filmType", e.target.value)}
-          className={`${inputCls} ${errors.filmType ? "!border-red-300 !bg-red-50" : ""}`}
-          placeholder="직접 입력 또는 위에서 선택"
+          onChange={(v) => onChange(index, "filmType", v)}
+          onSelect={handleFilmSelect}
+          error={!!errors.filmType}
         />
         {errors.filmType && <p className="text-xs text-red-500 mt-1">{errors.filmType}</p>}
       </div>
@@ -188,6 +181,34 @@ function FilmItemRow({
         </div>
       </div>
 
+      {item.scanType !== "없음" && (
+        <div>
+          <label className={labelCls}>스캔 해상도</label>
+          <div className="flex gap-2">
+            {(["standard", "high"] as const).map((res) => (
+              <label
+                key={res}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border-2 cursor-pointer transition-all text-xs font-medium ${
+                  item.scanResolution === res
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200 text-slate-600 hover:border-slate-400"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name={`scanResolution-${index}`}
+                  value={res}
+                  checked={item.scanResolution === res}
+                  onChange={() => onChange(index, "scanResolution", res)}
+                  className="sr-only"
+                />
+                {res === "standard" ? "표준" : "고해상도"}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>증감</label>
@@ -215,11 +236,22 @@ function FilmItemRow({
           />
         </div>
       </div>
+
+      <label className="flex items-center gap-2.5 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={item.halfFrame}
+          onChange={(e) => onChange(index, "halfFrame", e.target.checked)}
+          className="w-4 h-4 rounded border-slate-300 accent-slate-900 cursor-pointer"
+        />
+        <span className="text-sm text-slate-700">하프 프레임 촬영</span>
+        <span className="text-xs text-slate-400">(한 컷을 두 장으로 분할 촬영)</span>
+      </label>
     </div>
   );
 }
 
-export default function OrderForm({ defaultValues, editToken }: Props) {
+export default function OrderForm({ defaultValues, editToken, userId }: Props) {
   const router = useRouter();
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   const formRef = useRef<HTMLFormElement>(null);
@@ -241,7 +273,12 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
   const [editSuccess, setEditSuccess] = useState(false);
   const [draftBanner, setDraftBanner] = useState<Partial<OrderFormData> | null>(null);
 
-  // Load draft on mount
+  // Saved profile state
+  const [savedProfile, setSavedProfile] = useState<SavedProfile | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+
+  // Load draft on mount (new orders only)
   useEffect(() => {
     if (editToken) return;
     try {
@@ -250,14 +287,26 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
         const draft = JSON.parse(raw) as Partial<OrderFormData>;
         if (draft.customerName || draft.phone || (draft.filmItems?.length ?? 0) > 1 || draft.filmItems?.[0]?.filmType) {
           setDraftBanner(draft);
-          return; // don't enable saving until user decides
+          return;
         }
       }
     } catch {}
-    // Enable saving after 100ms to avoid overwriting draft on initial render
     const t = setTimeout(() => { draftSaveRef.current = true; }, 100);
     return () => clearTimeout(t);
   }, [editToken]);
+
+  // Load saved profile (logged-in users, new orders only)
+  useEffect(() => {
+    if (!userId || editToken) return;
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((data: SavedProfile) => {
+        if (data.profileName || data.profilePhone || data.profileEmail) {
+          setSavedProfile(data);
+        }
+      })
+      .catch(() => {});
+  }, [userId, editToken]);
 
   // Save draft on state changes
   useEffect(() => {
@@ -284,6 +333,35 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
     draftSaveRef.current = true;
   };
 
+  const loadProfile = () => {
+    if (!savedProfile) return;
+    if (savedProfile.profileName) setCustomerName(savedProfile.profileName);
+    if (savedProfile.profilePhone) setPhone(savedProfile.profilePhone);
+    if (savedProfile.profileEmail) setEmail(savedProfile.profileEmail);
+    if (savedProfile.profileAddress) setDeliveryAddress(savedProfile.profileAddress);
+    setSavedProfile(null);
+  };
+
+  const saveProfile = async () => {
+    if (!userId || savingProfile) return;
+    setSavingProfile(true);
+    try {
+      await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileName: customerName || null,
+          profilePhone: phone || null,
+          profileEmail: email || null,
+          profileAddress: deliveryAddress || null,
+        }),
+      });
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2000);
+    } catch {}
+    setSavingProfile(false);
+  };
+
   const clearError = (key: string) =>
     setErrors((prev) => {
       if (!prev[key]) return prev;
@@ -308,7 +386,7 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
     });
   };
 
-  const updateFilmItem = (index: number, key: keyof FilmItem, value: string | number) =>
+  const updateFilmItem = (index: number, key: keyof FilmItem, value: string | number | boolean) =>
     setFilmItems((prev) => prev.map((item, i) => (i === index ? { ...item, [key]: value } : item)));
 
   const addFilmItem = () => setFilmItems((prev) => [...prev, { ...DEFAULT_FILM_ITEM }]);
@@ -436,25 +514,31 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
     <>
       <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="lazyOnload" />
 
+      {/* Draft restore banner */}
       {draftBanner && (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
           <p className="text-sm text-amber-800">임시 저장된 내용이 있습니다.</p>
           <div className="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={restoreDraft}
-              className="text-xs font-semibold text-amber-900 hover:text-amber-950 underline underline-offset-2"
-            >
-              불러오기
-            </button>
-            <button
-              type="button"
-              onClick={dismissDraft}
-              className="text-xs text-amber-500 hover:text-amber-700 transition-colors"
-            >
-              무시
-            </button>
+            <button type="button" onClick={restoreDraft} className="text-xs font-semibold text-amber-900 hover:text-amber-950 underline underline-offset-2">불러오기</button>
+            <button type="button" onClick={dismissDraft} className="text-xs text-amber-500 hover:text-amber-700 transition-colors">무시</button>
           </div>
+        </div>
+      )}
+
+      {/* Saved profile banner */}
+      {savedProfile && !draftBanner && (
+        <div className="mb-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-blue-800">
+            저장된 고객 정보가 있습니다.
+            <span className="ml-1 text-blue-600 font-medium">{savedProfile.profileName}</span>
+          </p>
+          <button
+            type="button"
+            onClick={loadProfile}
+            className="text-xs font-semibold text-blue-700 hover:text-blue-900 underline underline-offset-2 shrink-0"
+          >
+            불러오기
+          </button>
         </div>
       )}
 
@@ -465,8 +549,21 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
           </div>
         )}
 
+        {/* 고객 정보 */}
         <section id="section-customer" className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 space-y-4">
-          <h2 className="font-semibold text-slate-900">고객 정보</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-slate-900">고객 정보</h2>
+            {userId && (
+              <button
+                type="button"
+                onClick={saveProfile}
+                disabled={savingProfile}
+                className="text-xs text-slate-500 hover:text-slate-800 transition-colors disabled:opacity-50"
+              >
+                {profileSaved ? "저장 완료 ✓" : savingProfile ? "저장 중..." : "정보 저장"}
+              </button>
+            )}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>고객명 *</label>
@@ -506,6 +603,7 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
           </div>
         </section>
 
+        {/* 필름 정보 */}
         <section id="section-films" className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 space-y-4">
           <h2 className="font-semibold text-slate-900">필름 정보</h2>
           {errors.filmItems && <p className="text-xs text-red-500">{errors.filmItems}</p>}
@@ -537,6 +635,7 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
           </button>
         </section>
 
+        {/* 수령 방법 */}
         <section id="section-pickup" className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 space-y-4">
           <h2 className="font-semibold text-slate-900">수령 방법</h2>
           <div className="flex gap-3">
@@ -549,14 +648,7 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
                     : "border-slate-200 text-slate-600 hover:border-slate-400"
                 }`}
               >
-                <input
-                  type="radio"
-                  name="pickupMethod"
-                  value={v}
-                  checked={pickupMethod === v}
-                  onChange={() => setPickupMethod(v)}
-                  className="sr-only"
-                />
+                <input type="radio" name="pickupMethod" value={v} checked={pickupMethod === v} onChange={() => setPickupMethod(v)} className="sr-only" />
                 {v}
               </label>
             ))}
@@ -587,13 +679,7 @@ export default function OrderForm({ defaultValues, editToken }: Props) {
 
           <div>
             <label className={labelCls}>요청사항</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              className={inputCls}
-              placeholder="특이사항, 현상 요청사항 등"
-            />
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputCls} placeholder="특이사항, 현상 요청사항 등" />
           </div>
         </section>
 
