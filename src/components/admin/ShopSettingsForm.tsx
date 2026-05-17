@@ -435,6 +435,21 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
               className={numInputCls}
             />
           </div>
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">증감 추가금 (원/stop)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={s.pricing?.pushPullPerStop ?? 0}
+              onChange={(e) =>
+                setS((prev) => ({
+                  ...prev,
+                  pricing: { ...(prev.pricing ?? DEFAULT_PRICING), pushPullPerStop: parseInt(e.target.value) || 0 },
+                }))
+              }
+              className={numInputCls}
+            />
+          </div>
         </div>
 
         <div>

@@ -9,6 +9,7 @@ export interface PricingConfig {
   scanHighExtra: number;
   scanUltraExtra: number;
   halfFrameExtra: number;
+  pushPullPerStop: number;
   note: string;
 }
 
@@ -42,6 +43,7 @@ export const DEFAULT_PRICING: PricingConfig = {
   scanHighExtra: 0,
   scanUltraExtra: 0,
   halfFrameExtra: 0,
+  pushPullPerStop: 0,
   note: "",
 };
 

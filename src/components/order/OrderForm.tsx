@@ -335,7 +335,8 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
       procs.some((v) => (v?.develop ?? 0) > 0 || (v?.jpgScan ?? 0) > 0 || (v?.tiffScan ?? 0) > 0) ||
       (p.scanHighExtra ?? 0) > 0 ||
       (p.scanUltraExtra ?? 0) > 0 ||
-      (p.halfFrameExtra ?? 0) > 0
+      (p.halfFrameExtra ?? 0) > 0 ||
+      (p.pushPullPerStop ?? 0) > 0
     );
   }, [settings.pricing]);
 
@@ -353,7 +354,9 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
       const highExtra = item.scanResolution === "high" ? (settings.pricing?.scanHighExtra ?? 0) : 0;
       const ultraExtra = item.scanResolution === "ultra" ? (settings.pricing?.scanUltraExtra ?? 0) : 0;
       const halfExtra = item.halfFrame ? (settings.pricing?.halfFrameExtra ?? 0) : 0;
-      return sum + (develop + scanCost + highExtra + ultraExtra + halfExtra) * item.quantity;
+      const stops = Math.abs(parseInt(item.pushPull ?? "0") || 0);
+      const pushPullExtra = stops * (settings.pricing?.pushPullPerStop ?? 0);
+      return sum + (develop + scanCost + highExtra + ultraExtra + halfExtra + pushPullExtra) * item.quantity;
     }, 0);
   }, [filmItems, settings.pricing, pricingEnabled]);
 
@@ -805,7 +808,8 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
                 {filmItems.map((item, i) => {
                   const pp2 = settings.pricing?.processes?.[item.process] as { develop?: number; jpgScan?: number; tiffScan?: number } | undefined;
                   const scanCost2 = item.scanType === "JPG" ? (pp2?.jpgScan ?? 0) : item.scanType === "TIFF" ? (pp2?.tiffScan ?? 0) : item.scanType === "JPG+TIFF" ? (pp2?.jpgScan ?? 0) + (pp2?.tiffScan ?? 0) : 0;
-                  const itemTotal = ((pp2?.develop ?? 0) + scanCost2 + (item.scanResolution === "high" ? (settings.pricing?.scanHighExtra ?? 0) : 0) + (item.scanResolution === "ultra" ? (settings.pricing?.scanUltraExtra ?? 0) : 0) + (item.halfFrame ? (settings.pricing?.halfFrameExtra ?? 0) : 0)) * item.quantity;
+                  const stops2 = Math.abs(parseInt(item.pushPull ?? "0") || 0);
+                  const itemTotal = ((pp2?.develop ?? 0) + scanCost2 + (item.scanResolution === "high" ? (settings.pricing?.scanHighExtra ?? 0) : 0) + (item.scanResolution === "ultra" ? (settings.pricing?.scanUltraExtra ?? 0) : 0) + (item.halfFrame ? (settings.pricing?.halfFrameExtra ?? 0) : 0) + stops2 * (settings.pricing?.pushPullPerStop ?? 0)) * item.quantity;
                   return (
                     <div key={i} className="flex justify-between text-xs text-slate-500">
                       <span>필름 {i + 1} {item.filmType ? `(${item.filmType} × ${item.quantity}롤)` : `(× ${item.quantity}롤)`}</span>
