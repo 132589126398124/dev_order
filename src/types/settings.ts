@@ -16,6 +16,7 @@ export interface ShopSettings {
   filmNotices: Record<string, string>;
   orderNotice: string | null;
   pricing: PricingConfig;
+  adminEmail: string | null;
 }
 
 export const DEFAULT_PRICING: PricingConfig = {
@@ -36,4 +37,5 @@ export const DEFAULT_SETTINGS: ShopSettings = {
   filmNotices: {},
   orderNotice: null,
   pricing: DEFAULT_PRICING,
+  adminEmail: null,
 };

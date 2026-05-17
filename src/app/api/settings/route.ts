@@ -16,6 +16,7 @@ export async function GET() {
     filmNotices: (raw.filmNotices as Record<string, string>) ?? {},
     orderNotice: raw.orderNotice,
     pricing: (raw.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
+    adminEmail: null,
   };
   return NextResponse.json(settings);
 }

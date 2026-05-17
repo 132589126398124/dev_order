@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { orderSchema } from "@/types/order";
 import { generateUniqueCode } from "@/lib/unique-code";
 import { appendOrderToSheet } from "@/lib/sheets";
-import { sendOrderConfirmation, sendEditLink } from "@/lib/email";
+import { sendOrderConfirmation, sendEditLink, sendNewOrderNotification } from "@/lib/email";
 import { checkOrderRateLimit } from "@/lib/rate-limit";
 import { getSession } from "@/lib/auth";
 import { customAlphabet } from "nanoid";
@@ -66,6 +66,23 @@ export async function POST(req: NextRequest) {
       if (!session) await sendEditLink(order.email, order.customerName, order.uniqueCode, editToken);
     } catch (e) {
       console.error("Email send failed:", e);
+    }
+
+    try {
+      const shopSettings = await prisma.shopSettings.findUnique({
+        where: { id: "singleton" },
+        select: { adminEmail: true },
+      });
+      if (shopSettings?.adminEmail) {
+        sendNewOrderNotification(shopSettings.adminEmail, {
+          customerName: order.customerName,
+          uniqueCode: order.uniqueCode,
+          id: order.id,
+          phone: order.phone,
+        }).catch((e) => console.error("Admin notification failed:", e));
+      }
+    } catch (e) {
+      console.error("Admin notify fetch failed:", e);
     }
 
     return NextResponse.json({ id: order.id, uniqueCode: order.uniqueCode });

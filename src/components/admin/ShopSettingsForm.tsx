@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { searchFilms } from "@/data/films";
 import type { FilmEntry } from "@/data/films";
 import type { ShopSettings } from "@/types/settings";
@@ -18,6 +18,36 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  const [pinForm, setPinForm] = useState({ current: "", next: "", confirm: "" });
+  const [pinSaving, setPinSaving] = useState(false);
+  const [pinResult, setPinResult] = useState<{ ok?: boolean; error?: string } | null>(null);
+
+  const changePin = useCallback(async () => {
+    if (pinSaving) return;
+    if (!/^\d{6}$/.test(pinForm.next)) { setPinResult({ error: "새 PIN은 숫자 6자리여야 합니다" }); return; }
+    if (pinForm.next !== pinForm.confirm) { setPinResult({ error: "새 PIN이 일치하지 않습니다" }); return; }
+    setPinSaving(true);
+    setPinResult(null);
+    try {
+      const res = await fetch("/api/admin/pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPin: pinForm.current, newPin: pinForm.next }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setPinResult({ ok: true });
+        setPinForm({ current: "", next: "", confirm: "" });
+      } else {
+        setPinResult({ error: json.error ?? "오류가 발생했습니다" });
+      }
+    } catch {
+      setPinResult({ error: "서버 연결 실패" });
+    } finally {
+      setPinSaving(false);
+    }
+  }, [pinForm, pinSaving]);
 
   const [filmQuery, setFilmQuery] = useState("");
   const [filmResults, setFilmResults] = useState<FilmEntry[]>([]);
@@ -386,6 +416,24 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
         </div>
       </div>
 
+      {/* 알림 설정 */}
+      <div className={cardCls}>
+        <div>
+          <h2 className="font-semibold text-slate-900">알림 설정</h2>
+          <p className="text-xs text-slate-400 mt-0.5">신규 접수 시 이메일로 알림을 받습니다</p>
+        </div>
+        <div>
+          <label className="text-xs text-slate-500 mb-1 block">관리자 알림 이메일</label>
+          <input
+            type="email"
+            value={s.adminEmail ?? ""}
+            onChange={(e) => setS((p) => ({ ...p, adminEmail: e.target.value || null }))}
+            placeholder="example@email.com"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400"
+          />
+        </div>
+      </div>
+
       {saveError && <p className="text-sm text-red-500 text-center">{saveError}</p>}
 
       <button
@@ -396,6 +444,53 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
       >
         {saved ? "저장 완료 ✓" : saving ? "저장 중..." : "설정 저장"}
       </button>
+
+      {/* 어드민 PIN 변경 */}
+      <div className={cardCls}>
+        <div>
+          <h2 className="font-semibold text-slate-900">관리자 PIN 변경</h2>
+          <p className="text-xs text-slate-400 mt-0.5">숫자 6자리. 변경 후 즉시 적용됩니다.</p>
+        </div>
+        <div className="space-y-2">
+          <input
+            type="password"
+            inputMode="numeric"
+            maxLength={6}
+            value={pinForm.current}
+            onChange={(e) => setPinForm((p) => ({ ...p, current: e.target.value.replace(/\D/g, "").slice(0, 6) }))}
+            placeholder="현재 PIN"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400 tracking-widest"
+          />
+          <input
+            type="password"
+            inputMode="numeric"
+            maxLength={6}
+            value={pinForm.next}
+            onChange={(e) => setPinForm((p) => ({ ...p, next: e.target.value.replace(/\D/g, "").slice(0, 6) }))}
+            placeholder="새 PIN (6자리)"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400 tracking-widest"
+          />
+          <input
+            type="password"
+            inputMode="numeric"
+            maxLength={6}
+            value={pinForm.confirm}
+            onChange={(e) => setPinForm((p) => ({ ...p, confirm: e.target.value.replace(/\D/g, "").slice(0, 6) }))}
+            placeholder="새 PIN 확인"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400 tracking-widest"
+          />
+        </div>
+        {pinResult?.error && <p className="text-xs text-red-500">{pinResult.error}</p>}
+        {pinResult?.ok && <p className="text-xs text-emerald-600">PIN이 변경되었습니다</p>}
+        <button
+          type="button"
+          onClick={changePin}
+          disabled={pinSaving || !pinForm.current || !pinForm.next || !pinForm.confirm}
+          className="w-full bg-slate-800 text-white py-2.5 rounded-xl font-medium hover:bg-slate-700 active:scale-95 disabled:opacity-40 transition-all text-sm"
+        >
+          {pinSaving ? "변경 중..." : "PIN 변경"}
+        </button>
+      </div>
     </div>
   );
 }

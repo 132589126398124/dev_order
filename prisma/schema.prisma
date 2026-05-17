@@ -59,6 +59,8 @@ model ShopSettings {
   filmNotices         Json     @default("{}")
   orderNotice         String?
   pricing             Json     @default("{}")
+  adminEmail          String?
+  adminPinHash        String?
   updatedAt           DateTime @updatedAt
 }
 

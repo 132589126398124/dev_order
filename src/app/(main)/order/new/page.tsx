@@ -26,6 +26,7 @@ export default async function NewOrderPage() {
         filmNotices: (rawSettings.filmNotices as Record<string, string>) ?? {},
         orderNotice: rawSettings.orderNotice,
         pricing: (rawSettings.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
+        adminEmail: rawSettings.adminEmail ?? null,
       }
     : DEFAULT_SETTINGS;
 

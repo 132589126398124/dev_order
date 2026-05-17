@@ -14,6 +14,7 @@ function serialize(raw: {
   filmNotices: unknown;
   orderNotice: string | null;
   pricing: unknown;
+  adminEmail: string | null;
 }): ShopSettings {
   return {
     acceptPushPull: raw.acceptPushPull,
@@ -25,6 +26,7 @@ function serialize(raw: {
     filmNotices: (raw.filmNotices as Record<string, string>) ?? {},
     orderNotice: raw.orderNotice,
     pricing: (raw.pricing as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
+    adminEmail: raw.adminEmail,
   };
 }
 
@@ -51,6 +53,7 @@ export async function PATCH(req: Request) {
   if (body.filmNotices !== undefined) data.filmNotices = body.filmNotices;
   if (body.orderNotice !== undefined) data.orderNotice = body.orderNotice || null;
   if (body.pricing !== undefined) data.pricing = body.pricing;
+  if (body.adminEmail !== undefined) data.adminEmail = body.adminEmail || null;
 
   const raw = await prisma.shopSettings.upsert({
     where: { id: "singleton" },

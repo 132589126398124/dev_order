@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { OrderStatus } from "@prisma/client";
+import { sendStatusNotification } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -25,6 +26,20 @@ export async function POST(req: NextRequest) {
     where: { id: { in: ids } },
     data,
   });
+
+  if (result.count > 0) {
+    const updatedOrders = await prisma.order.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, email: true, customerName: true, uniqueCode: true },
+    });
+    await Promise.allSettled(
+      updatedOrders.map((o) =>
+        sendStatusNotification(o.email, o.customerName, o.uniqueCode, o.id, status).catch((e) =>
+          console.error("Batch email:", e)
+        )
+      )
+    );
+  }
 
   return NextResponse.json({ ok: true, count: result.count });
 }

@@ -80,6 +80,35 @@ export async function sendStatusNotification(
   });
 }
 
+export async function sendNewOrderNotification(
+  adminEmail: string,
+  order: { customerName: string; uniqueCode: string; id: string; phone: string }
+) {
+  if (!isEmailConfigured()) {
+    console.log(`[EMAIL SKIP] new order notification to admin ${adminEmail}: ${order.uniqueCode}`);
+    return;
+  }
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const FROM = process.env.EMAIL_FROM!;
+  const detailUrl = `${APP_URL}/admin/orders`;
+  await resend.emails.send({
+    from: FROM,
+    to: adminEmail,
+    subject: `[현상 의뢰] 신규 접수 - ${order.uniqueCode}`,
+    html: `
+      <p>새 현상 의뢰가 접수되었습니다.</p>
+      <ul>
+        <li>고유코드: <strong>${order.uniqueCode}</strong></li>
+        <li>고객명: ${order.customerName}</li>
+        <li>연락처: ${order.phone}</li>
+      </ul>
+      <p><a href="${detailUrl}">관리자 페이지 바로가기</a></p>
+      <hr/>
+      <p style="color:#888;font-size:12px;">본 메일은 자동 발송되었습니다.</p>
+    `,
+  });
+}
+
 export async function sendOrderConfirmation(email: string, customerName: string, uniqueCode: string) {
   if (!isEmailConfigured()) {
     console.log(`[EMAIL SKIP] confirmation for ${email}, code: ${uniqueCode}`);
