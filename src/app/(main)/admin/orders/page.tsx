@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ORDER_STATUS_LABELS } from "@/types/order";
+import { OrderStatus } from "@prisma/client";
 import { startOfDay, endOfDay, subDays, format } from "date-fns";
 import { ko } from "date-fns/locale";
 import AdminSearch from "@/components/admin/AdminSearch";
@@ -80,18 +81,18 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
 
   const todayStart = startOfDay(new Date());
 
-  const [orders, total, statusGroups, todayCount] = await Promise.all([
+  const ALL_STATUSES = Object.values(OrderStatus);
+
+  const [orders, total, todayCount, grandTotal, ...perStatusCounts] = await Promise.all([
     prisma.order.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * limit, take: limit }),
     prisma.order.count({ where }),
-    prisma.order.groupBy({ by: ["status" as any], _count: { _all: true } }),
     prisma.order.count({ where: { createdAt: { gte: todayStart } } }),
+    prisma.order.count({}),
+    ...ALL_STATUSES.map((s) => prisma.order.count({ where: { status: s } })),
   ]);
 
   const totalPages = Math.ceil(total / limit);
-  const statusCounts = Object.fromEntries(
-    (statusGroups as any[]).map((g: any) => [g.status, g._count._all as number])
-  );
-  const grandTotal = (statusGroups as any[]).reduce((s: number, g: any) => s + g._count._all, 0);
+  const statusCounts = Object.fromEntries(ALL_STATUSES.map((s, i) => [s, perStatusCounts[i]]));
 
   const serializedOrders = orders.map((o) => ({
     id: o.id,
