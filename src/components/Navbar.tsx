@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth";
 import Link from "next/link";
 import LogoutButton from "./LogoutButton";
+import { SHOP_NAME } from "@/lib/shop";
 
 export default async function Navbar() {
   const session = await getSession();
@@ -9,7 +10,7 @@ export default async function Navbar() {
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link href="/" className="font-bold text-slate-900 tracking-tight">
-          현상 의뢰
+          {SHOP_NAME}
         </Link>
 
         <nav className="flex items-center gap-1">

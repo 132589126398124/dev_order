@@ -5,6 +5,7 @@ import { ko } from "date-fns/locale";
 import type { FilmItem } from "@/types/order";
 import PrintTrigger from "@/components/order/PrintTrigger";
 import ManualPrintButton from "@/components/order/ManualPrintButton";
+import { SHOP_NAME } from "@/lib/shop";
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -33,7 +34,7 @@ export default async function PrintPage({ params }: Props) {
         {/* Header */}
         <div style={{ borderBottom: "2px solid #111", paddingBottom: 14, marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 700 }}>KDL 현상소 — 필름 현상 의뢰서</div>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>{SHOP_NAME} — 필름 현상 의뢰서</div>
             <div style={{ fontSize: 11, color: "#666", marginTop: 4 }}>{createdAt}</div>
           </div>
           <div style={{ textAlign: "right" }}>

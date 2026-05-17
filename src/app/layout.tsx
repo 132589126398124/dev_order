@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { SHOP_NAME } from "@/lib/shop";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,13 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "현상 의뢰", template: "%s | 현상 의뢰" },
+  title: { default: SHOP_NAME, template: `%s | ${SHOP_NAME}` },
   description: "필름 현상 및 스캔 택배 접수 서비스",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "현상 의뢰",
+    title: SHOP_NAME,
   },
 };
 

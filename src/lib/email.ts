@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { SHOP_NAME } from "@/lib/shop";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -17,7 +18,7 @@ export async function sendEditLink(email: string, customerName: string, uniqueCo
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: `[현상 의뢰] 접수 내역 수정 링크 - ${uniqueCode}`,
+    subject: `[${SHOP_NAME}] 접수 내역 수정 링크 - ${uniqueCode}`,
     html: `
       <p>${customerName}님, 안녕하세요.</p>
       <p>접수 내역 수정 링크입니다. <strong>48시간</strong> 이내에 사용해주세요.</p>
@@ -39,19 +40,19 @@ export async function sendStatusNotification(
   const trackingUrl = `${APP_URL}/order/${orderId}`;
   const messages: Record<string, { subject: string; body: string }> = {
     SHIPPED: {
-      subject: `[현상 의뢰] 필름 수령 확인 - ${uniqueCode}`,
+      subject: `[${SHOP_NAME}] 필름 수령 확인 - ${uniqueCode}`,
       body: `<p>${customerName}님의 필름이 도착했습니다.</p><p>현상 작업을 곧 시작할 예정입니다. 진행 상황은 아래 링크에서 확인하실 수 있습니다.</p>`,
     },
     PROCESSING: {
-      subject: `[현상 의뢰] 현상 작업 시작 - ${uniqueCode}`,
+      subject: `[${SHOP_NAME}] 현상 작업 시작 - ${uniqueCode}`,
       body: `<p>${customerName}님의 필름 현상 작업을 시작했습니다.</p><p>완료되면 다시 안내 드리겠습니다.</p>`,
     },
     DONE: {
-      subject: `[현상 의뢰] 현상 완료 - ${uniqueCode}`,
+      subject: `[${SHOP_NAME}] 현상 완료 - ${uniqueCode}`,
       body: `<p>${customerName}님의 현상이 완료되었습니다.</p><p>선택하신 수령 방법에 따라 발송 또는 방문 준비가 완료되었습니다.</p>`,
     },
     CANCELLED: {
-      subject: `[현상 의뢰] 접수 취소 - ${uniqueCode}`,
+      subject: `[${SHOP_NAME}] 접수 취소 - ${uniqueCode}`,
       body: `<p>${customerName}님의 접수(${uniqueCode})가 취소되었습니다.</p><p>문의사항이 있으시면 연락 주세요.</p>`,
     },
   };
@@ -94,7 +95,7 @@ export async function sendNewOrderNotification(
   await resend.emails.send({
     from: FROM,
     to: adminEmail,
-    subject: `[현상 의뢰] 신규 접수 - ${order.uniqueCode}`,
+    subject: `[${SHOP_NAME}] 신규 접수 - ${order.uniqueCode}`,
     html: `
       <p>새 현상 의뢰가 접수되었습니다.</p>
       <ul>
@@ -119,7 +120,7 @@ export async function sendOrderConfirmation(email: string, customerName: string,
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: `[현상 의뢰] 접수 완료 - ${uniqueCode}`,
+    subject: `[${SHOP_NAME}] 접수 완료 - ${uniqueCode}`,
     html: `
       <p>${customerName}님, 접수가 완료되었습니다.</p>
       <p>고유코드: <strong>${uniqueCode}</strong></p>
