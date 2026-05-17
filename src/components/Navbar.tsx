@@ -38,12 +38,20 @@ export default async function Navbar() {
                   </Link>
                 </>
               ) : (
-                <Link
-                  href="/my/orders"
-                  className="text-sm font-medium text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-100 transition-colors"
-                >
-                  내 접수
-                </Link>
+                <>
+                  <Link
+                    href="/my/orders"
+                    className="text-sm font-medium text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-100 transition-colors"
+                  >
+                    내 접수
+                  </Link>
+                  <Link
+                    href="/my/profile"
+                    className="text-sm font-medium text-slate-400 px-3 py-1.5 rounded-full hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                  >
+                    프로필
+                  </Link>
+                </>
               )}
               <LogoutButton />
             </>

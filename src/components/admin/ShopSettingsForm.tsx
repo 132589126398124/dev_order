@@ -87,6 +87,7 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
   };
 
   const cardCls = "bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 space-y-4";
+  const numInputCls = "w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
   const toggleSwitch = (active: boolean, onToggle: () => void, label: string, desc: string) => (
     <div className="flex items-center justify-between gap-4">
@@ -297,7 +298,7 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
                       },
                     }))
                   }
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none"
+                  className={numInputCls}
                 />
               </div>
             ))}
@@ -327,7 +328,7 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
                       },
                     }))
                   }
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none"
+                  className={numInputCls}
                 />
               </div>
             ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Script from "next/script";
@@ -317,6 +317,27 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
   const [savedProfile, setSavedProfile] = useState<SavedProfile | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
+
+  const pricingEnabled = useMemo(() => {
+    const p = settings.pricing;
+    return (
+      Object.values(p.processes ?? {}).some((v) => (v ?? 0) > 0) ||
+      Object.values(p.scanTypes ?? {}).some((v) => (v ?? 0) > 0) ||
+      (p.scanHighExtra ?? 0) > 0 ||
+      (p.halfFrameExtra ?? 0) > 0
+    );
+  }, [settings.pricing]);
+
+  const estimatedTotal = useMemo(() => {
+    if (!pricingEnabled) return 0;
+    return filmItems.reduce((sum, item) => {
+      const processPrice = settings.pricing?.processes?.[item.process] ?? 0;
+      const scanPrice = settings.pricing?.scanTypes?.[item.scanType] ?? 0;
+      const highExtra = item.scanResolution === "high" ? (settings.pricing?.scanHighExtra ?? 0) : 0;
+      const halfExtra = item.halfFrame ? (settings.pricing?.halfFrameExtra ?? 0) : 0;
+      return sum + (processPrice + scanPrice + highExtra + halfExtra) * item.quantity;
+    }, 0);
+  }, [filmItems, settings.pricing, pricingEnabled]);
 
   // Load draft on mount (new orders only)
   useEffect(() => {
@@ -741,6 +762,36 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
           </div>
         </section>
 
+        {pricingEnabled && (
+          <section className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-slate-900">예상 금액</h2>
+              <span className="text-lg font-bold text-slate-900">{estimatedTotal.toLocaleString()}원</span>
+            </div>
+            {filmItems.length > 1 && (
+              <div className="mt-3 space-y-1 border-t border-slate-100 pt-3">
+                {filmItems.map((item, i) => {
+                  const processPrice = settings.pricing?.processes?.[item.process] ?? 0;
+                  const scanPrice = settings.pricing?.scanTypes?.[item.scanType] ?? 0;
+                  const highExtra = item.scanResolution === "high" ? (settings.pricing?.scanHighExtra ?? 0) : 0;
+                  const halfExtra = item.halfFrame ? (settings.pricing?.halfFrameExtra ?? 0) : 0;
+                  const itemTotal = (processPrice + scanPrice + highExtra + halfExtra) * item.quantity;
+                  return (
+                    <div key={i} className="flex justify-between text-xs text-slate-500">
+                      <span>필름 {i + 1} {item.filmType ? `(${item.filmType} × ${item.quantity}롤)` : `(× ${item.quantity}롤)`}</span>
+                      <span>{itemTotal.toLocaleString()}원</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {settings.pricing?.note && (
+              <p className="text-xs text-slate-500 mt-2">{settings.pricing.note}</p>
+            )}
+            <p className="text-xs text-slate-400 mt-1.5">※ 실제 금액은 접수 확인 후 안내됩니다</p>
+          </section>
+        )}
+
         <button
           type="submit"
           disabled={submitting}
@@ -752,6 +803,12 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
 
       {!editToken && (
         <div className="fixed bottom-0 left-0 right-0 sm:hidden z-40 bg-white/95 backdrop-blur-sm border-t border-slate-100 px-4 pb-6 pt-3">
+          {pricingEnabled && (
+            <div className="flex justify-between items-center mb-2 px-1">
+              <span className="text-xs text-slate-500">예상 금액</span>
+              <span className="text-sm font-bold text-slate-900">{estimatedTotal.toLocaleString()}원</span>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => formRef.current?.requestSubmit()}
