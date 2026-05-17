@@ -38,10 +38,14 @@ const memOrderLimiter = new RateLimiterMemory({ points: 5, duration: 3600 });
 const memLoginLimiter = new RateLimiterMemory({ points: 10, duration: 900 });
 
 export async function checkOrderRateLimit(ip: string): Promise<boolean> {
-  const upstash = await getUpstashLimiters();
-  if (upstash) {
-    const { success } = await upstash.order.limit(ip);
-    return success;
+  try {
+    const upstash = await getUpstashLimiters();
+    if (upstash) {
+      const { success } = await upstash.order.limit(ip);
+      return success;
+    }
+  } catch (e) {
+    console.warn("Upstash order rate limit failed, falling back to memory:", e);
   }
   try {
     await memOrderLimiter.consume(ip);
@@ -52,10 +56,14 @@ export async function checkOrderRateLimit(ip: string): Promise<boolean> {
 }
 
 export async function checkLoginRateLimit(ip: string): Promise<boolean> {
-  const upstash = await getUpstashLimiters();
-  if (upstash) {
-    const { success } = await upstash.login.limit(ip);
-    return success;
+  try {
+    const upstash = await getUpstashLimiters();
+    if (upstash) {
+      const { success } = await upstash.login.limit(ip);
+      return success;
+    }
+  } catch (e) {
+    console.warn("Upstash login rate limit failed, falling back to memory:", e);
   }
   try {
     await memLoginLimiter.consume(ip);

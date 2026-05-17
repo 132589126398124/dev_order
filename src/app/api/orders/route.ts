@@ -23,49 +23,54 @@ async function verifyRecaptcha(token: string): Promise<boolean> {
 }
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
-  const allowed = await checkOrderRateLimit(ip);
-  if (!allowed) return NextResponse.json({ error: "잠시 후 다시 시도해주세요. (시간당 5건 제한)" }, { status: 429 });
-
-  const body = await req.json();
-  const parsed = orderSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "입력값을 확인해주세요", details: parsed.error.flatten() }, { status: 400 });
-
-  const valid = await verifyRecaptcha(parsed.data.recaptchaToken);
-  if (!valid) return NextResponse.json({ error: "보안 검증에 실패했습니다" }, { status: 400 });
-
-  const session = await getSession();
-  const { recaptchaToken, filmItems, ...rest } = parsed.data;
-
-  const uniqueCode = generateUniqueCode();
-  const editToken = tokenGen();
-  const editTokenExpires = addHours(new Date(), 48);
-
-  const order = await prisma.order.create({
-    data: {
-      ...rest,
-      filmItems: filmItems as any,
-      uniqueCode,
-      userId: session?.userId ?? null,
-      editToken,
-      editTokenExpires,
-    },
-  });
-
   try {
-    await appendOrderToSheet(order);
-  } catch (e) {
-    console.error("Sheets append failed:", e);
-  }
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+    const allowed = await checkOrderRateLimit(ip);
+    if (!allowed) return NextResponse.json({ error: "잠시 후 다시 시도해주세요. (시간당 5건 제한)" }, { status: 429 });
 
-  try {
-    await sendOrderConfirmation(order.email, order.customerName, order.uniqueCode);
-    if (!session) await sendEditLink(order.email, order.customerName, order.uniqueCode, editToken);
-  } catch (e) {
-    console.error("Email send failed:", e);
-  }
+    const body = await req.json();
+    const parsed = orderSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "입력값을 확인해주세요", details: parsed.error.flatten() }, { status: 400 });
 
-  return NextResponse.json({ id: order.id, uniqueCode: order.uniqueCode });
+    const valid = await verifyRecaptcha(parsed.data.recaptchaToken);
+    if (!valid) return NextResponse.json({ error: "보안 검증에 실패했습니다" }, { status: 400 });
+
+    const session = await getSession();
+    const { recaptchaToken, filmItems, ...rest } = parsed.data;
+
+    const uniqueCode = generateUniqueCode();
+    const editToken = tokenGen();
+    const editTokenExpires = addHours(new Date(), 48);
+
+    const order = await prisma.order.create({
+      data: {
+        ...rest,
+        filmItems: filmItems as any,
+        uniqueCode,
+        userId: session?.userId ?? null,
+        editToken,
+        editTokenExpires,
+      },
+    });
+
+    try {
+      await appendOrderToSheet(order);
+    } catch (e) {
+      console.error("Sheets append failed:", e);
+    }
+
+    try {
+      await sendOrderConfirmation(order.email, order.customerName, order.uniqueCode);
+      if (!session) await sendEditLink(order.email, order.customerName, order.uniqueCode, editToken);
+    } catch (e) {
+      console.error("Email send failed:", e);
+    }
+
+    return NextResponse.json({ id: order.id, uniqueCode: order.uniqueCode });
+  } catch (e) {
+    console.error("Order POST unhandled error:", e);
+    return NextResponse.json({ error: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요." }, { status: 500 });
+  }
 }
 
 export async function GET(req: NextRequest) {

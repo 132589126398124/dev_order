@@ -495,12 +495,16 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
     setSubmitting(true);
     try {
       let token = "dev-token";
-      if (siteKey && !siteKey.includes("your-site")) {
-        token = await new Promise<string>((resolve) =>
-          window.grecaptcha.ready(async () => {
-            resolve(await window.grecaptcha.execute(siteKey, { action: "submit" }));
-          })
-        );
+      if (siteKey && !siteKey.includes("your-site") && typeof window !== "undefined" && window.grecaptcha) {
+        try {
+          token = await new Promise<string>((resolve) =>
+            window.grecaptcha.ready(async () => {
+              resolve(await window.grecaptcha.execute(siteKey, { action: "submit" }));
+            })
+          );
+        } catch {
+          // reCAPTCHA 로드 실패 시 dev-token으로 진행 (서버에서 RECAPTCHA_SECRET_KEY 미설정 시 무시됨)
+        }
       }
 
       const url = editToken ? `/api/orders/edit/${editToken}` : "/api/orders";
@@ -512,7 +516,13 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
         body: JSON.stringify({ ...parsed.data, recaptchaToken: token }),
       });
 
-      const json = await res.json();
+      let json: { id?: string; uniqueCode?: string; error?: string } = {};
+      try {
+        json = await res.json();
+      } catch {
+        setErrors({ _: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요." });
+        return;
+      }
 
       if (!res.ok) {
         setErrors({ _: json.error ?? "오류가 발생했습니다" });
