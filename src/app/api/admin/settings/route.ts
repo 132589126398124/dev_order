@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { DEFAULT_SETTINGS, DEFAULT_PRICING } from "@/types/settings";
+import { DEFAULT_SETTINGS, DEFAULT_PRICING, DEFAULT_RESOLUTION_CONFIG } from "@/types/settings";
 import type { ShopSettings } from "@/types/settings";
 
 function serialize(raw: {
@@ -15,6 +15,7 @@ function serialize(raw: {
   orderNotice: string | null;
   pricing: unknown;
   adminEmail: string | null;
+  resolutionConfig: unknown;
 }): ShopSettings {
   return {
     acceptPushPull: raw.acceptPushPull,
@@ -27,6 +28,7 @@ function serialize(raw: {
     orderNotice: raw.orderNotice,
     pricing: (raw.pricing as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
     adminEmail: raw.adminEmail,
+    resolutionConfig: (raw.resolutionConfig as ShopSettings["resolutionConfig"]) ?? DEFAULT_RESOLUTION_CONFIG,
   };
 }
 
@@ -54,6 +56,7 @@ export async function PATCH(req: Request) {
   if (body.orderNotice !== undefined) data.orderNotice = body.orderNotice || null;
   if (body.pricing !== undefined) data.pricing = body.pricing;
   if (body.adminEmail !== undefined) data.adminEmail = body.adminEmail || null;
+  if (body.resolutionConfig !== undefined) data.resolutionConfig = body.resolutionConfig;
 
   const raw = await prisma.shopSettings.upsert({
     where: { id: "singleton" },

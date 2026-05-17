@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { DEFAULT_SETTINGS, DEFAULT_PRICING } from "@/types/settings";
+import { DEFAULT_SETTINGS, DEFAULT_PRICING, DEFAULT_RESOLUTION_CONFIG } from "@/types/settings";
 import type { ShopSettings } from "@/types/settings";
 
 export async function GET() {
@@ -17,6 +17,7 @@ export async function GET() {
     orderNotice: raw.orderNotice,
     pricing: (raw.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
     adminEmail: null,
+    resolutionConfig: (raw.resolutionConfig as unknown as ShopSettings["resolutionConfig"]) ?? DEFAULT_RESOLUTION_CONFIG,
   };
   return NextResponse.json(settings);
 }

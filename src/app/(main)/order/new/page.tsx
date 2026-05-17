@@ -2,7 +2,7 @@ import OrderForm from "@/components/order/OrderForm";
 import Script from "next/script";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { DEFAULT_SETTINGS, DEFAULT_PRICING } from "@/types/settings";
+import { DEFAULT_SETTINGS, DEFAULT_PRICING, DEFAULT_RESOLUTION_CONFIG } from "@/types/settings";
 import type { ShopSettings } from "@/types/settings";
 import Link from "next/link";
 
@@ -27,6 +27,7 @@ export default async function NewOrderPage() {
         orderNotice: rawSettings.orderNotice,
         pricing: (rawSettings.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
         adminEmail: rawSettings.adminEmail ?? null,
+        resolutionConfig: (rawSettings.resolutionConfig as unknown as ShopSettings["resolutionConfig"]) ?? DEFAULT_RESOLUTION_CONFIG,
       }
     : DEFAULT_SETTINGS;
 

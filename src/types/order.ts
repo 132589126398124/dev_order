@@ -6,7 +6,7 @@ export const filmItemSchema = z.object({
   quantity: z.number().int().min(1).max(100),
   ei: z.string().max(20).optional(),
   scanType: z.enum(["없음", "JPG", "TIFF", "JPG+TIFF"], { message: "스캔 타입을 선택해주세요" }),
-  scanResolution: z.enum(["standard", "high"]).default("standard"),
+  scanResolution: z.enum(["standard", "high", "ultra"]).default("standard"),
   process: z.enum(["C-41", "ECN-2", "B&W", "E-6", "기타"], { message: "현상 프로세스를 선택해주세요" }),
   pushPull: z.string().default("0"),
   halfFrame: z.boolean().default(false),

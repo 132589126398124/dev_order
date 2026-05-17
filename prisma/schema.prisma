@@ -61,6 +61,7 @@ model ShopSettings {
   pricing             Json     @default("{}")
   adminEmail          String?
   adminPinHash        String?
+  resolutionConfig    Json     @default("{}")
   updatedAt           DateTime @updatedAt
 }
 

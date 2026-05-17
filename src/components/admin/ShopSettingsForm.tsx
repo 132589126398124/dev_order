@@ -210,11 +210,50 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
         </div>
 
         <div>
-          <p className="text-sm font-medium text-slate-700 mb-2">스캔 해상도</p>
-          <div className="flex gap-2 flex-wrap">
-            {ALL_RESOLUTIONS.map(({ value, label }) =>
-              optionToggle(label, value, s.disabledResolutions, "disabledResolutions")
-            )}
+          <p className="text-sm font-medium text-slate-700 mb-1">스캔 해상도</p>
+          <p className="text-xs text-slate-400 mb-3">접수 폼에 표시할 해상도 옵션을 설정합니다. 해상도 설명을 입력하면 고객에게 그대로 노출됩니다.</p>
+          <div className="space-y-2">
+            {(["standard", "high", "ultra"] as const).map((key) => {
+              const labels = { standard: "표준", high: "고해상도", ultra: "초고해상도" };
+              const opt = s.resolutionConfig?.[key] ?? { enabled: key !== "ultra", description: "" };
+              return (
+                <div key={key} className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setS((prev) => ({
+                        ...prev,
+                        resolutionConfig: {
+                          ...(prev.resolutionConfig ?? { standard: { enabled: true, description: "" }, high: { enabled: true, description: "" }, ultra: { enabled: false, description: "" } }),
+                          [key]: { ...opt, enabled: !opt.enabled },
+                        },
+                      }))
+                    }
+                    className={`shrink-0 text-xs font-medium px-3 py-1.5 rounded-xl border transition-all ${
+                      opt.enabled
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : "border-slate-200 bg-slate-50 text-slate-400"
+                    }`}
+                  >
+                    {opt.enabled ? "✓" : "○"} {labels[key]}
+                  </button>
+                  <input
+                    value={opt.description}
+                    onChange={(e) =>
+                      setS((prev) => ({
+                        ...prev,
+                        resolutionConfig: {
+                          ...(prev.resolutionConfig ?? { standard: { enabled: true, description: "" }, high: { enabled: true, description: "" }, ultra: { enabled: false, description: "" } }),
+                          [key]: { ...opt, description: e.target.value },
+                        },
+                      }))
+                    }
+                    placeholder={`예: ${key === "standard" ? "2048px" : key === "high" ? "4096px" : "8000px"} 장변`}
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none placeholder:text-slate-300"
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -302,76 +341,60 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
       <div className={cardCls}>
         <div>
           <h2 className="font-semibold text-slate-900">요금 설정</h2>
-          <p className="text-xs text-slate-400 mt-0.5">접수 폼에 요금 안내로 표시됩니다. 0원 항목은 표시 안 됨.</p>
+          <p className="text-xs text-slate-400 mt-0.5">프로세스별로 현상·스캔 요금을 설정합니다. 0원 항목은 접수 폼에 표시되지 않습니다.</p>
         </div>
 
-        <div>
-          <p className="text-sm font-medium text-slate-700 mb-2">현상 프로세스 (원/롤)</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {ALL_PROCESSES.map((p) => (
-              <div key={p}>
-                <label className="text-xs text-slate-500 mb-1 block">{p}</label>
-                <input
-                  type="number"
-                  min={0}
-                  step={100}
-                  value={s.pricing?.processes?.[p] ?? 0}
-                  onChange={(e) =>
-                    setS((prev) => ({
-                      ...prev,
-                      pricing: {
-                        ...(prev.pricing ?? DEFAULT_PRICING),
-                        processes: {
-                          ...(prev.pricing?.processes ?? {}),
-                          [p]: parseInt(e.target.value) || 0,
-                        },
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100">
+                <th className="text-left text-xs font-medium text-slate-400 pb-2 pr-3">프로세스</th>
+                <th className="text-left text-xs font-medium text-slate-400 pb-2 px-2">현상 (원/롤)</th>
+                <th className="text-left text-xs font-medium text-slate-400 pb-2 px-2">JPG 스캔 (원/롤)</th>
+                <th className="text-left text-xs font-medium text-slate-400 pb-2 pl-2">TIFF 스캔 (원/롤)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {ALL_PROCESSES.map((proc) => {
+                const pp = (s.pricing?.processes?.[proc] as { develop?: number; jpgScan?: number; tiffScan?: number } | undefined);
+                const updateProc = (field: "develop" | "jpgScan" | "tiffScan", val: number) =>
+                  setS((prev) => ({
+                    ...prev,
+                    pricing: {
+                      ...(prev.pricing ?? DEFAULT_PRICING),
+                      processes: {
+                        ...(prev.pricing?.processes ?? {}),
+                        [proc]: { develop: 0, jpgScan: 0, tiffScan: 0, ...(prev.pricing?.processes?.[proc] ?? {}), [field]: val },
                       },
-                    }))
-                  }
-                  className={numInputCls}
-                />
-              </div>
-            ))}
-          </div>
+                    },
+                  }));
+                return (
+                  <tr key={proc}>
+                    <td className="py-2 pr-3 text-xs font-semibold text-slate-600 whitespace-nowrap">{proc}</td>
+                    {(["develop", "jpgScan", "tiffScan"] as const).map((field) => (
+                      <td key={field} className="py-2 px-2">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={pp?.[field] ?? 0}
+                          onChange={(e) => updateProc(field, parseInt(e.target.value) || 0)}
+                          className={numInputCls}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
 
-        <div>
-          <p className="text-sm font-medium text-slate-700 mb-2">스캔 타입 (원/롤)</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {ALL_SCAN_TYPES.map((t) => (
-              <div key={t}>
-                <label className="text-xs text-slate-500 mb-1 block">{t}</label>
-                <input
-                  type="number"
-                  min={0}
-                  step={100}
-                  value={s.pricing?.scanTypes?.[t] ?? 0}
-                  onChange={(e) =>
-                    setS((prev) => ({
-                      ...prev,
-                      pricing: {
-                        ...(prev.pricing ?? DEFAULT_PRICING),
-                        scanTypes: {
-                          ...(prev.pricing?.scanTypes ?? {}),
-                          [t]: parseInt(e.target.value) || 0,
-                        },
-                      },
-                    }))
-                  }
-                  className={numInputCls}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
           <div>
             <label className="text-xs text-slate-500 mb-1 block">고해상도 추가금 (원/롤)</label>
             <input
-              type="number"
-              min={0}
-              step={100}
+              type="text"
+              inputMode="numeric"
               value={s.pricing?.scanHighExtra ?? 0}
               onChange={(e) =>
                 setS((prev) => ({
@@ -379,15 +402,29 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
                   pricing: { ...(prev.pricing ?? DEFAULT_PRICING), scanHighExtra: parseInt(e.target.value) || 0 },
                 }))
               }
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none"
+              className={numInputCls}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">초고해상도 추가금 (원/롤)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={s.pricing?.scanUltraExtra ?? 0}
+              onChange={(e) =>
+                setS((prev) => ({
+                  ...prev,
+                  pricing: { ...(prev.pricing ?? DEFAULT_PRICING), scanUltraExtra: parseInt(e.target.value) || 0 },
+                }))
+              }
+              className={numInputCls}
             />
           </div>
           <div>
             <label className="text-xs text-slate-500 mb-1 block">하프프레임 추가금 (원/롤)</label>
             <input
-              type="number"
-              min={0}
-              step={100}
+              type="text"
+              inputMode="numeric"
               value={s.pricing?.halfFrameExtra ?? 0}
               onChange={(e) =>
                 setS((prev) => ({
@@ -395,7 +432,7 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
                   pricing: { ...(prev.pricing ?? DEFAULT_PRICING), halfFrameExtra: parseInt(e.target.value) || 0 },
                 }))
               }
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none"
+              className={numInputCls}
             />
           </div>
         </div>

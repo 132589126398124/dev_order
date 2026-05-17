@@ -54,7 +54,8 @@ interface SavedProfile {
 
 const ALL_PROCESSES = ["C-41", "ECN-2", "B&W", "E-6", "기타"] as const;
 const ALL_SCAN_TYPES = ["없음", "JPG", "TIFF", "JPG+TIFF"] as const;
-const ALL_RESOLUTIONS = ["standard", "high"] as const;
+const ALL_RESOLUTIONS = ["standard", "high", "ultra"] as const;
+const RESOLUTION_LABELS: Record<string, string> = { standard: "표준", high: "고해상도", ultra: "초고해상도" };
 
 function FilmItemRow({
   item,
@@ -77,7 +78,11 @@ function FilmItemRow({
 }) {
   const availableProcesses = ALL_PROCESSES.filter((p) => !settings.disabledProcesses.includes(p));
   const availableScanTypes = ALL_SCAN_TYPES.filter((t) => !settings.disabledScanTypes.includes(t));
-  const availableResolutions = ALL_RESOLUTIONS.filter((r) => !settings.disabledResolutions.includes(r));
+  const rc = settings.resolutionConfig;
+  const availableResolutions = ALL_RESOLUTIONS.filter((r) => {
+    if (rc) return rc[r]?.enabled ?? (r !== "ultra");
+    return !settings.disabledResolutions.includes(r);
+  });
 
   const isFilmBlocked = settings.blockedFilms.includes(item.filmType);
   const filmNotice = settings.filmNotices[item.filmType];
@@ -221,26 +226,30 @@ function FilmItemRow({
         <div>
           <label className={labelCls}>스캔 해상도</label>
           <div className="flex gap-2">
-            {availableResolutions.map((res) => (
-              <label
-                key={res}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border-2 cursor-pointer transition-all text-xs font-medium ${
-                  item.scanResolution === res
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 text-slate-600 hover:border-slate-400"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name={`scanResolution-${index}`}
-                  value={res}
-                  checked={item.scanResolution === res}
-                  onChange={() => onChange(index, "scanResolution", res)}
-                  className="sr-only"
-                />
-                {res === "standard" ? "표준" : "고해상도"}
-              </label>
-            ))}
+            {availableResolutions.map((res) => {
+              const desc = rc?.[res]?.description;
+              return (
+                <label
+                  key={res}
+                  className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-xl border-2 cursor-pointer transition-all text-xs font-medium ${
+                    item.scanResolution === res
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200 text-slate-600 hover:border-slate-400"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name={`scanResolution-${index}`}
+                    value={res}
+                    checked={item.scanResolution === res}
+                    onChange={() => onChange(index, "scanResolution", res)}
+                    className="sr-only"
+                  />
+                  <span>{RESOLUTION_LABELS[res]}</span>
+                  {desc && <span className={`text-[10px] mt-0.5 ${item.scanResolution === res ? "text-white/70" : "text-slate-400"}`}>{desc}</span>}
+                </label>
+              );
+            })}
           </div>
         </div>
       )}
@@ -307,6 +316,7 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
     defaultValues?.pickupMethod ?? "택배"
   );
   const [deliveryAddress, setDeliveryAddress] = useState(defaultValues?.deliveryAddress ?? "");
+  const [deliveryAddressDetail, setDeliveryAddressDetail] = useState("");
   const [notes, setNotes] = useState(defaultValues?.notes ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -320,10 +330,11 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
 
   const pricingEnabled = useMemo(() => {
     const p = settings.pricing;
+    const procs = Object.values(p.processes ?? {}) as Array<{ develop?: number; jpgScan?: number; tiffScan?: number }>;
     return (
-      Object.values(p.processes ?? {}).some((v) => (v ?? 0) > 0) ||
-      Object.values(p.scanTypes ?? {}).some((v) => (v ?? 0) > 0) ||
+      procs.some((v) => (v?.develop ?? 0) > 0 || (v?.jpgScan ?? 0) > 0 || (v?.tiffScan ?? 0) > 0) ||
       (p.scanHighExtra ?? 0) > 0 ||
+      (p.scanUltraExtra ?? 0) > 0 ||
       (p.halfFrameExtra ?? 0) > 0
     );
   }, [settings.pricing]);
@@ -331,11 +342,18 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
   const estimatedTotal = useMemo(() => {
     if (!pricingEnabled) return 0;
     return filmItems.reduce((sum, item) => {
-      const processPrice = settings.pricing?.processes?.[item.process] ?? 0;
-      const scanPrice = settings.pricing?.scanTypes?.[item.scanType] ?? 0;
+      const pp = settings.pricing?.processes?.[item.process] as { develop?: number; jpgScan?: number; tiffScan?: number } | undefined;
+      const develop = pp?.develop ?? 0;
+      const jpgScan = pp?.jpgScan ?? 0;
+      const tiffScan = pp?.tiffScan ?? 0;
+      const scanCost =
+        item.scanType === "JPG" ? jpgScan :
+        item.scanType === "TIFF" ? tiffScan :
+        item.scanType === "JPG+TIFF" ? jpgScan + tiffScan : 0;
       const highExtra = item.scanResolution === "high" ? (settings.pricing?.scanHighExtra ?? 0) : 0;
+      const ultraExtra = item.scanResolution === "ultra" ? (settings.pricing?.scanUltraExtra ?? 0) : 0;
       const halfExtra = item.halfFrame ? (settings.pricing?.halfFrameExtra ?? 0) : 0;
-      return sum + (processPrice + scanPrice + highExtra + halfExtra) * item.quantity;
+      return sum + (develop + scanCost + highExtra + ultraExtra + halfExtra) * item.quantity;
     }, 0);
   }, [filmItems, settings.pricing, pricingEnabled]);
 
@@ -490,13 +508,19 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
     e.preventDefault();
     setErrors({});
 
+    const fullAddress = deliveryAddress
+      ? deliveryAddressDetail.trim()
+        ? `${deliveryAddress} ${deliveryAddressDetail.trim()}`
+        : deliveryAddress
+      : "";
+
     const payload = {
       customerName,
       phone,
       email,
       filmItems,
       pickupMethod,
-      deliveryAddress: pickupMethod === "택배" ? deliveryAddress : undefined,
+      deliveryAddress: pickupMethod === "택배" ? fullAddress : undefined,
       notes,
       recaptchaToken: "pending",
     };
@@ -736,13 +760,13 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
           {pickupMethod === "택배" && (
             <div>
               <label className={labelCls}>반송 주소 *</label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-2">
                 <input
                   value={deliveryAddress}
-                  onChange={(e) => { setDeliveryAddress(e.target.value); clearError("deliveryAddress"); }}
-                  onBlur={(e) => blurValidate("deliveryAddress", e.target.value)}
-                  className={`${inputCls} flex-1 ${errors.deliveryAddress ? "!border-red-300 !bg-red-50" : ""}`}
-                  placeholder="현상 완료 후 반송 받을 주소"
+                  readOnly
+                  onClick={openPostcode}
+                  className={`${inputCls} flex-1 cursor-pointer ${errors.deliveryAddress ? "!border-red-300 !bg-red-50" : ""}`}
+                  placeholder="주소 검색 버튼을 눌러주세요"
                 />
                 <button
                   type="button"
@@ -752,6 +776,14 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
                   주소 검색
                 </button>
               </div>
+              {deliveryAddress && (
+                <input
+                  value={deliveryAddressDetail}
+                  onChange={(e) => setDeliveryAddressDetail(e.target.value)}
+                  className={inputCls}
+                  placeholder="상세 주소 입력 (동/호수 등)"
+                />
+              )}
               {errors.deliveryAddress && <p className="text-xs text-red-500 mt-1">{errors.deliveryAddress}</p>}
             </div>
           )}
@@ -771,11 +803,9 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
             {filmItems.length > 1 && (
               <div className="mt-3 space-y-1 border-t border-slate-100 pt-3">
                 {filmItems.map((item, i) => {
-                  const processPrice = settings.pricing?.processes?.[item.process] ?? 0;
-                  const scanPrice = settings.pricing?.scanTypes?.[item.scanType] ?? 0;
-                  const highExtra = item.scanResolution === "high" ? (settings.pricing?.scanHighExtra ?? 0) : 0;
-                  const halfExtra = item.halfFrame ? (settings.pricing?.halfFrameExtra ?? 0) : 0;
-                  const itemTotal = (processPrice + scanPrice + highExtra + halfExtra) * item.quantity;
+                  const pp2 = settings.pricing?.processes?.[item.process] as { develop?: number; jpgScan?: number; tiffScan?: number } | undefined;
+                  const scanCost2 = item.scanType === "JPG" ? (pp2?.jpgScan ?? 0) : item.scanType === "TIFF" ? (pp2?.tiffScan ?? 0) : item.scanType === "JPG+TIFF" ? (pp2?.jpgScan ?? 0) + (pp2?.tiffScan ?? 0) : 0;
+                  const itemTotal = ((pp2?.develop ?? 0) + scanCost2 + (item.scanResolution === "high" ? (settings.pricing?.scanHighExtra ?? 0) : 0) + (item.scanResolution === "ultra" ? (settings.pricing?.scanUltraExtra ?? 0) : 0) + (item.halfFrame ? (settings.pricing?.halfFrameExtra ?? 0) : 0)) * item.quantity;
                   return (
                     <div key={i} className="flex justify-between text-xs text-slate-500">
                       <span>필름 {i + 1} {item.filmType ? `(${item.filmType} × ${item.quantity}롤)` : `(× ${item.quantity}롤)`}</span>
