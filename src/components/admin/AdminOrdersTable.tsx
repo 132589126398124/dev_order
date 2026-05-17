@@ -24,6 +24,7 @@ export default function AdminOrdersTable({ orders, currentUrl }: { orders: Order
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [batchStatus, setBatchStatus] = useState("SHIPPED");
+  const [batchScanUrl, setBatchScanUrl] = useState("");
   const [applying, setApplying] = useState(false);
   const [batchError, setBatchError] = useState("");
   const selectAllRef = useRef<HTMLInputElement>(null);
@@ -55,11 +56,16 @@ export default function AdminOrdersTable({ orders, currentUrl }: { orders: Order
       const res = await fetch("/api/orders/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [...selected], status: batchStatus }),
+        body: JSON.stringify({
+          ids: [...selected],
+          status: batchStatus,
+          ...(batchStatus === "DONE" ? { scanFileUrl: batchScanUrl } : {}),
+        }),
       });
       const json = await res.json();
       if (res.ok) {
         setSelected(new Set());
+        setBatchScanUrl("");
         router.replace(currentUrl);
       } else {
         setBatchError(json.error ?? "오류가 발생했습니다");
@@ -169,13 +175,21 @@ export default function AdminOrdersTable({ orders, currentUrl }: { orders: Order
             <span className="text-xs text-slate-400 shrink-0">일괄 변경:</span>
             <select
               value={batchStatus}
-              onChange={(e) => setBatchStatus(e.target.value)}
+              onChange={(e) => { setBatchStatus(e.target.value); setBatchScanUrl(""); }}
               className="bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-slate-500 cursor-pointer"
             >
               {Object.entries(ORDER_STATUS_LABELS).map(([val, label]) => (
                 <option key={val} value={val}>{label}</option>
               ))}
             </select>
+            {batchStatus === "DONE" && (
+              <input
+                value={batchScanUrl}
+                onChange={(e) => setBatchScanUrl(e.target.value)}
+                placeholder="스캔 파일 링크 (선택)"
+                className="bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-emerald-500 placeholder:text-slate-500 w-56"
+              />
+            )}
             <button
               onClick={applyBatch}
               disabled={applying}
