@@ -51,15 +51,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
-  const { id } = await params;
+  try {
+    const session = await getSession();
+    const { id } = await params;
 
-  const order = await prisma.order.findUnique({ where: { id } });
-  if (!order) return NextResponse.json({ error: "접수 건을 찾을 수 없습니다" }, { status: 404 });
+    const order = await prisma.order.findUnique({ where: { id } });
+    if (!order) return NextResponse.json({ error: "접수 건을 찾을 수 없습니다" }, { status: 404 });
 
-  if (!session?.isAdmin && order.userId !== session?.userId) {
-    return NextResponse.json({ error: "권한 없음" }, { status: 403 });
+    if (!session?.isAdmin && order.userId !== session?.userId) {
+      return NextResponse.json({ error: "권한 없음" }, { status: 403 });
+    }
+
+    return NextResponse.json(order);
+  } catch (e) {
+    console.error("Order GET unhandled error:", e);
+    return NextResponse.json({ error: "서버 오류가 발생했습니다" }, { status: 500 });
   }
-
-  return NextResponse.json(order);
 }

@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { DEFAULT_SETTINGS, DEFAULT_PRICING, DEFAULT_RESOLUTION_CONFIG } from "@/types/settings";
 import type { ShopSettings } from "@/types/settings";
 
+export const revalidate = 60;
+
 export async function GET() {
   const raw = await prisma.shopSettings.findUnique({ where: { id: "singleton" } });
   if (!raw) return NextResponse.json(DEFAULT_SETTINGS);
@@ -18,6 +20,7 @@ export async function GET() {
     pricing: (raw.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
     adminEmail: null,
     resolutionConfig: (raw.resolutionConfig as unknown as ShopSettings["resolutionConfig"]) ?? DEFAULT_RESOLUTION_CONFIG,
+    autoExpireDays: raw.autoExpireDays ?? 7,
   };
   return NextResponse.json(settings);
 }

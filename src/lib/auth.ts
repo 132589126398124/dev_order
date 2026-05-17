@@ -2,8 +2,13 @@ import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const COOKIE_NAME = "film_session";
+
+function getSecret() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET environment variable is not set");
+  return new TextEncoder().encode(secret);
+}
 
 export async function hashPin(pin: string): Promise<string> {
   return bcrypt.hash(pin, 10);
@@ -17,7 +22,7 @@ export async function createSession(userId: string, username: string, isAdmin: b
   const token = await new SignJWT({ userId, username, isAdmin })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")
-    .sign(SECRET);
+    .sign(getSecret());
 
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
@@ -35,7 +40,7 @@ export async function getSession() {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, getSecret());
     return payload as { userId: string; username: string; isAdmin: boolean };
   } catch {
     return null;

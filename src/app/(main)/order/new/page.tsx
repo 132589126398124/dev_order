@@ -28,6 +28,7 @@ export default async function NewOrderPage() {
         pricing: (rawSettings.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
         adminEmail: rawSettings.adminEmail ?? null,
         resolutionConfig: (rawSettings.resolutionConfig as unknown as ShopSettings["resolutionConfig"]) ?? DEFAULT_RESOLUTION_CONFIG,
+        autoExpireDays: rawSettings.autoExpireDays ?? 7,
       }
     : DEFAULT_SETTINGS;
 

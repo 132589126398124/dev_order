@@ -62,6 +62,7 @@ model ShopSettings {
   adminEmail          String?
   adminPinHash        String?
   resolutionConfig    Json     @default("{}")
+  autoExpireDays      Int      @default(7)
   updatedAt           DateTime @updatedAt
 }
 

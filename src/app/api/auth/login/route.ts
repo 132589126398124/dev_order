@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { verifyPin, createSession } from "@/lib/auth";
 import { checkLoginRateLimit } from "@/lib/rate-limit";
+
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    // Still compare to avoid timing leak on length
+    timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
+}
 
 
 export async function POST(req: NextRequest) {
@@ -30,8 +42,8 @@ export async function POST(req: NextRequest) {
     if (dbSettings?.adminPinHash) {
       valid = await verifyPin(pin, dbSettings.adminPinHash);
     } else {
-      const adminPin = process.env.ADMIN_PIN;
-      valid = !!adminPin && pin === adminPin;
+      const adminPin = process.env.ADMIN_PIN ?? "";
+      valid = adminPin.length > 0 && timingSafeStringEqual(pin, adminPin);
     }
 
     if (!valid) {

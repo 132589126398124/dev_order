@@ -98,8 +98,7 @@ function FilmItemRow({
     if (availableResolutions.length > 0 && !availableResolutions.includes(res)) {
       onChange(index, "scanResolution", availableResolutions[0]);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.disabledProcesses, settings.disabledScanTypes, settings.disabledResolutions]);
+  }, [settings.disabledProcesses, settings.disabledScanTypes, settings.disabledResolutions, settings.resolutionConfig]);
 
   const handleFilmSelect = (film: FilmEntry) => {
     onChange(index, "filmType", film.name);
@@ -277,7 +276,8 @@ function FilmItemRow({
           <label className={labelCls}>EI (감도)</label>
           <input
             value={item.ei ?? ""}
-            onChange={(e) => onChange(index, "ei", e.target.value)}
+            onChange={(e) => onChange(index, "ei", e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+            inputMode="numeric"
             className={inputCls}
             placeholder="800, 1600..."
           />
@@ -322,6 +322,7 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
   const [submitting, setSubmitting] = useState(false);
   const [editSuccess, setEditSuccess] = useState(false);
   const [draftBanner, setDraftBanner] = useState<Partial<OrderFormData> | null>(null);
+  const errorBannerRef = useRef<HTMLDivElement>(null);
 
   // Saved profile state
   const [savedProfile, setSavedProfile] = useState<SavedProfile | null>(null);
@@ -393,8 +394,8 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
   // Save draft on state changes
   useEffect(() => {
     if (!draftSaveRef.current || editToken) return;
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ customerName, phone, email, filmItems, pickupMethod, deliveryAddress, notes }));
-  }, [customerName, phone, email, filmItems, pickupMethod, deliveryAddress, notes, editToken]);
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ customerName, phone, email, filmItems, pickupMethod, deliveryAddress, deliveryAddressDetail, notes }));
+  }, [customerName, phone, email, filmItems, pickupMethod, deliveryAddress, deliveryAddressDetail, notes, editToken]);
 
   const restoreDraft = () => {
     if (!draftBanner) return;
@@ -404,6 +405,8 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
     if (draftBanner.filmItems?.length) setFilmItems(draftBanner.filmItems);
     if (draftBanner.pickupMethod) setPickupMethod(draftBanner.pickupMethod as "택배" | "방문" | "폐기");
     if (draftBanner.deliveryAddress) setDeliveryAddress(draftBanner.deliveryAddress);
+    const draftWithDetail = draftBanner as Partial<OrderFormData> & { deliveryAddressDetail?: string };
+    if (draftWithDetail.deliveryAddressDetail) setDeliveryAddressDetail(draftWithDetail.deliveryAddressDetail);
     if (draftBanner.notes) setNotes(draftBanner.notes);
     setDraftBanner(null);
     draftSaveRef.current = true;
@@ -574,6 +577,7 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
 
       if (!res.ok) {
         setErrors({ _: json.error ?? "오류가 발생했습니다" });
+        setTimeout(() => errorBannerRef.current?.focus(), 50);
         return;
       }
 
@@ -586,6 +590,7 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
       router.push(`/order/complete/${json.id}`);
     } catch {
       setErrors({ _: "서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요." });
+      setTimeout(() => errorBannerRef.current?.focus(), 50);
     } finally {
       setSubmitting(false);
     }
@@ -649,7 +654,13 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
 
       <form ref={formRef} onSubmit={onSubmit} className={`space-y-6 ${!editToken ? "pb-24 sm:pb-0" : ""}`}>
         {errors._ && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+          <div
+            ref={errorBannerRef}
+            role="alert"
+            aria-live="assertive"
+            tabIndex={-1}
+            className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 focus:outline-none"
+          >
             {errors._}
           </div>
         )}

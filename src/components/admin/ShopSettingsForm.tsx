@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { searchFilms } from "@/data/films";
 import type { FilmEntry } from "@/data/films";
 import type { ShopSettings } from "@/types/settings";
@@ -8,16 +8,18 @@ import { DEFAULT_PRICING } from "@/types/settings";
 
 const ALL_PROCESSES = ["C-41", "ECN-2", "B&W", "E-6", "기타"] as const;
 const ALL_SCAN_TYPES = ["없음", "JPG", "TIFF", "JPG+TIFF"] as const;
-const ALL_RESOLUTIONS = [
-  { value: "standard", label: "표준" },
-  { value: "high", label: "고해상도" },
-] as const;
 
 export default function ShopSettingsForm({ initialSettings }: { initialSettings: ShopSettings }) {
-  const [s, setS] = useState(initialSettings);
+  const [s, setStateS] = useState(initialSettings);
+  const setS: typeof setStateS = useCallback((v) => {
+    setStateS(v);
+    setIsDirty(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [isDirty, setIsDirty] = useState(false);
 
   const [pinForm, setPinForm] = useState({ current: "", next: "", confirm: "" });
   const [pinSaving, setPinSaving] = useState(false);
@@ -52,10 +54,21 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
   const [filmQuery, setFilmQuery] = useState("");
   const [filmResults, setFilmResults] = useState<FilmEntry[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [filmResultIndex, setFilmResultIndex] = useState(-1);
   const filmInputRef = useRef<HTMLInputElement>(null);
+
+  // Unsaved changes warning
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) { e.preventDefault(); e.returnValue = ""; }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   const handleFilmSearch = (q: string) => {
     setFilmQuery(q);
+    setFilmResultIndex(-1);
     if (q.trim().length === 0) {
       setFilmResults([]);
       setShowResults(false);
@@ -63,6 +76,23 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
     }
     setFilmResults(searchFilms(q));
     setShowResults(true);
+  };
+
+  const handleFilmKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showResults || filmResults.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFilmResultIndex((i) => Math.min(i + 1, filmResults.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFilmResultIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter" && filmResultIndex >= 0) {
+      e.preventDefault();
+      addBlockedFilm(filmResults[filmResultIndex]);
+    } else if (e.key === "Escape") {
+      setShowResults(false);
+      setFilmResultIndex(-1);
+    }
   };
 
   const addBlockedFilm = (film: FilmEntry) => {
@@ -108,6 +138,7 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
       });
       if (!res.ok) throw new Error();
       setSaved(true);
+      setIsDirty(false);
       setTimeout(() => setSaved(false), 2500);
     } catch {
       setSaveError("저장에 실패했습니다. 다시 시도해주세요.");
@@ -119,18 +150,19 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
   const cardCls = "bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 space-y-4";
   const numInputCls = "w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
-  const toggleSwitch = (active: boolean, onToggle: () => void, label: string, desc: string) => (
+  const toggleSwitch = (active: boolean, onToggle: () => void, label: string, desc: string, id: string) => (
     <div className="flex items-center justify-between gap-4">
-      <div>
+      <div id={id}>
         <p className="text-sm font-medium text-slate-700">{label}</p>
-        <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+        <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
       </div>
       <button
         type="button"
         role="switch"
         aria-checked={active}
+        aria-labelledby={id}
         onClick={onToggle}
-        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 ${
           active ? "bg-slate-900" : "bg-slate-200"
         }`}
       >
@@ -171,14 +203,33 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
           s.acceptPushPull,
           () => setS((p) => ({ ...p, acceptPushPull: !p.acceptPushPull })),
           "증감 현상 접수 허용",
-          "Push / Pull 현상 의뢰를 받을지 여부"
+          "Push / Pull 현상 의뢰를 받을지 여부",
+          "toggle-pushpull"
         )}
         {toggleSwitch(
           s.acceptHalfFrame,
           () => setS((p) => ({ ...p, acceptHalfFrame: !p.acceptHalfFrame })),
           "하프 프레임 접수 허용",
-          "하프 프레임 촬영 의뢰를 받을지 여부"
+          "하프 프레임 촬영 의뢰를 받을지 여부",
+          "toggle-halfframe"
         )}
+        <div className="flex items-center justify-between gap-4">
+          <div id="label-autoexpire">
+            <p className="text-sm font-medium text-slate-700">접수 자동 만료 기간</p>
+            <p className="text-xs text-slate-500 mt-0.5">접수 후 이 기간이 지나면 PENDING 상태가 자동으로 만료됩니다</p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <input
+              type="text"
+              inputMode="numeric"
+              aria-labelledby="label-autoexpire"
+              value={s.autoExpireDays ?? 7}
+              onChange={(e) => setS((p) => ({ ...p, autoExpireDays: Math.max(1, parseInt(e.target.value) || 1) }))}
+              className="w-16 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-center focus:bg-white focus:border-slate-400 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <span className="text-sm text-slate-500">일</span>
+          </div>
+        </div>
       </div>
 
       {/* 현상 프로세스 */}
@@ -272,22 +323,28 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
             ref={filmInputRef}
             value={filmQuery}
             onChange={(e) => handleFilmSearch(e.target.value)}
-            onBlur={() => setTimeout(() => setShowResults(false), 150)}
+            onBlur={() => setTimeout(() => { setShowResults(false); setFilmResultIndex(-1); }, 150)}
             onFocus={() => filmQuery && setShowResults(true)}
+            onKeyDown={handleFilmKeyDown}
             placeholder="필름 이름 검색 후 추가..."
+            aria-label="의뢰 불가 필름 검색"
+            aria-autocomplete="list"
+            aria-expanded={showResults && filmResults.length > 0}
             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400"
           />
           {showResults && filmResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border border-slate-200 shadow-lg z-10 max-h-48 overflow-y-auto">
-              {filmResults.map((f) => (
+            <div role="listbox" className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border border-slate-200 shadow-lg z-10 max-h-48 overflow-y-auto">
+              {filmResults.map((f, idx) => (
                 <button
                   key={f.id}
                   type="button"
+                  role="option"
+                  aria-selected={filmResultIndex === idx}
                   onMouseDown={() => addBlockedFilm(f)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors text-left"
+                  className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors text-left ${filmResultIndex === idx ? "bg-slate-100" : "hover:bg-slate-50"}`}
                 >
                   <span className="font-medium text-slate-900">{f.name}</span>
-                  <span className="text-xs text-slate-400 shrink-0 ml-2">{f.brand} · {f.process}</span>
+                  <span className="text-xs text-slate-500 shrink-0 ml-2">{f.brand} · {f.process}</span>
                 </button>
               ))}
             </div>
@@ -488,16 +545,21 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
 
       {saveError && <p className="text-sm text-red-500 text-center">{saveError}</p>}
 
-      <button
-        type="button"
-        onClick={save}
-        disabled={saving}
-        className="w-full bg-slate-900 text-white py-3 rounded-2xl font-semibold hover:bg-slate-800 active:scale-95 disabled:opacity-50 transition-all text-sm"
-      >
-        {saved ? "저장 완료 ✓" : saving ? "저장 중..." : "설정 저장"}
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="flex-1 bg-slate-900 text-white py-3 rounded-2xl font-semibold hover:bg-slate-800 active:scale-95 disabled:opacity-50 transition-all text-sm"
+        >
+          {saved ? "저장 완료 ✓" : saving ? "저장 중..." : "설정 저장"}
+        </button>
+        {isDirty && !saved && (
+          <span className="text-xs text-amber-600 font-medium shrink-0">저장되지 않은 변경사항</span>
+        )}
+      </div>
 
-      {/* 어드민 PIN 변경 */}
+      {/* 어드민 PIN 변경 — 별도 저장 버튼 사용 */}
       <div className={cardCls}>
         <div>
           <h2 className="font-semibold text-slate-900">관리자 PIN 변경</h2>

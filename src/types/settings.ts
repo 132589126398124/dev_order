@@ -36,6 +36,7 @@ export interface ShopSettings {
   pricing: PricingConfig;
   adminEmail: string | null;
   resolutionConfig: ResolutionConfig;
+  autoExpireDays: number;
 }
 
 export const DEFAULT_PRICING: PricingConfig = {
@@ -65,4 +66,5 @@ export const DEFAULT_SETTINGS: ShopSettings = {
   pricing: DEFAULT_PRICING,
   adminEmail: null,
   resolutionConfig: DEFAULT_RESOLUTION_CONFIG,
+  autoExpireDays: 7,
 };

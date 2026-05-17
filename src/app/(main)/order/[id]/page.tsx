@@ -39,7 +39,7 @@ export default async function OrderDetailPage({ params }: Props) {
   const row = (label: string, value: string | null | undefined) =>
     value ? (
       <div key={label}>
-        <p className="text-xs text-slate-400 mb-0.5">{label}</p>
+        <p className="text-xs text-slate-500 mb-0.5">{label}</p>
         <p className="text-sm font-medium text-slate-900">{value}</p>
       </div>
     ) : null;
@@ -52,7 +52,7 @@ export default async function OrderDetailPage({ params }: Props) {
             ← 목록으로
           </Link>
           <h1 className="text-xl font-bold text-slate-900 font-mono">{order.uniqueCode}</h1>
-          <p className="text-xs text-slate-400 mt-1">{format(order.createdAt, "yyyy년 MM월 dd일 HH:mm", { locale: ko })} 접수</p>
+          <p className="text-xs text-slate-500 mt-1">{format(order.createdAt, "yyyy년 MM월 dd일 HH:mm", { locale: ko })} 접수</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {session?.isAdmin ? (
@@ -84,12 +84,9 @@ export default async function OrderDetailPage({ params }: Props) {
                 배송 조회
               </a>
             ) : (
-              <button
-                onClick={undefined}
-                className="shrink-0 text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg"
-              >
+              <span className="shrink-0 text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg">
                 {order.courierName ?? "택배사 미지정"}
-              </button>
+              </span>
             )}
           </div>
         </div>
@@ -132,17 +129,17 @@ export default async function OrderDetailPage({ params }: Props) {
           {filmItems.map((item, i) => (
             <div key={i} className="bg-slate-50 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-400">필름 {i + 1}</span>
+                <span className="text-xs font-semibold text-slate-500">필름 {i + 1}</span>
                 <span className="text-xs bg-white border border-slate-200 rounded-full px-2 py-0.5 text-slate-600">{item.process}</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                <div><p className="text-xs text-slate-400">종류</p><p className="font-medium">{item.filmType}</p></div>
-                <div><p className="text-xs text-slate-400">포맷</p><p className="font-medium">{item.format}</p></div>
-                <div><p className="text-xs text-slate-400">수량</p><p className="font-medium">{item.quantity}롤</p></div>
-                <div><p className="text-xs text-slate-400">스캔</p><p className="font-medium">{item.scanType}{item.scanResolution === "high" ? " (고해상도)" : ""}</p></div>
-                <div><p className="text-xs text-slate-400">증감</p><p className="font-medium">{item.pushPull === "0" ? "표준" : `${item.pushPull} stop`}</p></div>
-                {item.ei && <div><p className="text-xs text-slate-400">EI</p><p className="font-medium">{item.ei}</p></div>}
-                {item.halfFrame && <div className="col-span-2 sm:col-span-1"><p className="text-xs text-slate-400">하프 프레임</p><p className="font-medium">✓</p></div>}
+                <div><p className="text-xs text-slate-500">종류</p><p className="font-medium">{item.filmType}</p></div>
+                <div><p className="text-xs text-slate-500">포맷</p><p className="font-medium">{item.format}</p></div>
+                <div><p className="text-xs text-slate-500">수량</p><p className="font-medium">{item.quantity}롤</p></div>
+                <div><p className="text-xs text-slate-500">스캔</p><p className="font-medium">{item.scanType}{item.scanResolution === "high" ? " (고해상도)" : item.scanResolution === "ultra" ? " (초고해상도)" : ""}</p></div>
+                <div><p className="text-xs text-slate-500">증감</p><p className="font-medium">{item.pushPull === "0" ? "표준" : `${item.pushPull} stop`}</p></div>
+                {item.ei && <div><p className="text-xs text-slate-500">EI</p><p className="font-medium">{item.ei}</p></div>}
+                {item.halfFrame && <div className="col-span-2 sm:col-span-1"><p className="text-xs text-slate-500">하프 프레임</p><p className="font-medium">✓</p></div>}
               </div>
             </div>
           ))}

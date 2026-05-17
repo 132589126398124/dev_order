@@ -16,6 +16,7 @@ function serialize(raw: {
   pricing: unknown;
   adminEmail: string | null;
   resolutionConfig: unknown;
+  autoExpireDays: number;
 }): ShopSettings {
   return {
     acceptPushPull: raw.acceptPushPull,
@@ -29,6 +30,7 @@ function serialize(raw: {
     pricing: (raw.pricing as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
     adminEmail: raw.adminEmail,
     resolutionConfig: (raw.resolutionConfig as ShopSettings["resolutionConfig"]) ?? DEFAULT_RESOLUTION_CONFIG,
+    autoExpireDays: raw.autoExpireDays ?? 7,
   };
 }
 
@@ -57,6 +59,7 @@ export async function PATCH(req: Request) {
   if (body.pricing !== undefined) data.pricing = body.pricing;
   if (body.adminEmail !== undefined) data.adminEmail = body.adminEmail || null;
   if (body.resolutionConfig !== undefined) data.resolutionConfig = body.resolutionConfig;
+  if (typeof body.autoExpireDays === "number" && body.autoExpireDays >= 1) data.autoExpireDays = Math.floor(body.autoExpireDays);
 
   const raw = await prisma.shopSettings.upsert({
     where: { id: "singleton" },

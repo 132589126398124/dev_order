@@ -51,7 +51,7 @@ export default async function CompletePage({ params }: Props) {
 
       {/* 고유 코드 */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-6 mb-4">
-        <p className="text-xs text-slate-400 mb-1">고유 코드</p>
+        <p className="text-xs text-slate-500 mb-1">고유 코드</p>
         <p className="text-3xl font-mono font-bold tracking-widest text-slate-900">{order.uniqueCode}</p>
       </div>
 
@@ -59,29 +59,29 @@ export default async function CompletePage({ params }: Props) {
       <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 mb-4 space-y-3">
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <p className="text-xs text-slate-400">고객명</p>
+            <p className="text-xs text-slate-500">고객명</p>
             <p className="font-medium text-slate-900">{order.customerName}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">연락처</p>
+            <p className="text-xs text-slate-500">연락처</p>
             <p className="font-medium text-slate-900">
               {isOwner ? order.phone : maskPhone(order.phone)}
             </p>
           </div>
           <div className="col-span-2">
-            <p className="text-xs text-slate-400">이메일</p>
+            <p className="text-xs text-slate-500">이메일</p>
             <p className="font-medium text-slate-900">
               {isOwner ? order.email : maskEmail(order.email)}
             </p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">수령방법</p>
+            <p className="text-xs text-slate-500">수령방법</p>
             <p className="font-medium text-slate-900">{order.pickupMethod}</p>
           </div>
         </div>
         {filmItems.length > 0 && (
           <div>
-            <p className="text-xs text-slate-400 mb-2">필름 목록</p>
+            <p className="text-xs text-slate-500 mb-2">필름 목록</p>
             <div className="space-y-1.5">
               {filmItems.map((item, i) => (
                 <div key={i} className="text-sm text-slate-700 bg-slate-50 rounded-xl px-3 py-2">
@@ -104,7 +104,7 @@ export default async function CompletePage({ params }: Props) {
           >
             <div className="text-2xl mb-2">🖨️</div>
             <p className="text-sm font-medium text-slate-900">의뢰서 출력</p>
-            <p className="text-xs text-slate-400 mt-1">출력 후 필름과 동봉</p>
+            <p className="text-xs text-slate-500 mt-1">출력 후 필름과 동봉</p>
           </Link>
 
           <div className="border-2 border-slate-200 rounded-xl p-4 text-center">
@@ -125,6 +125,11 @@ export default async function CompletePage({ params }: Props) {
           >
             접수 내역 수정
           </Link>
+        )}
+        {!editLinkValid && order.editToken && !session && (
+          <div className="w-full border border-amber-200 bg-amber-50 rounded-2xl py-3 px-4 text-sm text-amber-700 text-center">
+            수정 링크가 만료되었습니다. 수정이 필요하면 이메일로 문의해주세요.
+          </div>
         )}
         {!session && (
           <Link

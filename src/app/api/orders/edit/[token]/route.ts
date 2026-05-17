@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { orderSchema } from "@/types/order";
+import { checkOrderRateLimit } from "@/lib/rate-limit";
+import { Prisma } from "@prisma/client";
 
 async function resolveOrder(token: string) {
   const [order, session] = await Promise.all([
@@ -33,6 +35,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+  const allowed2 = await checkOrderRateLimit(ip);
+  if (!allowed2) return NextResponse.json({ error: "잠시 후 다시 시도해주세요." }, { status: 429 });
+
   const { token } = await params;
   const { order, allowed, reason } = await resolveOrder(token);
 
@@ -50,7 +56,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ toke
 
   const updated = await prisma.order.update({
     where: { id: order.id },
-    data: { ...rest, filmItems: filmItems as any },
+    data: { ...rest, filmItems: filmItems as unknown as Prisma.InputJsonValue },
   });
 
   return NextResponse.json({ ok: true, uniqueCode: updated.uniqueCode });

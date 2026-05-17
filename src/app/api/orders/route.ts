@@ -8,6 +8,7 @@ import { checkOrderRateLimit } from "@/lib/rate-limit";
 import { getSession } from "@/lib/auth";
 import { customAlphabet } from "nanoid";
 import { addHours } from "date-fns";
+import { OrderStatus, Prisma } from "@prisma/client";
 
 const tokenGen = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 32);
 
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     const order = await prisma.order.create({
       data: {
         ...rest,
-        filmItems: filmItems as any,
+        filmItems: filmItems as unknown as Prisma.InputJsonValue,
         uniqueCode,
         userId: linkedUserId,
         editToken,
@@ -102,13 +103,17 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status") ?? undefined;
   const search = searchParams.get("search") ?? undefined;
 
+  if (status && !Object.values(OrderStatus).includes(status as OrderStatus)) {
+    return NextResponse.json({ error: "올바르지 않은 상태값" }, { status: 400 });
+  }
+
   const where = {
-    ...(status ? { status: status as any } : {}),
+    ...(status ? { status: status as OrderStatus } : {}),
     ...(search ? {
       OR: [
         { uniqueCode: { contains: search, mode: "insensitive" as const } },
         { customerName: { contains: search, mode: "insensitive" as const } },
-        { phone: { contains: search } },
+        { phone: { contains: search, mode: "insensitive" as const } },
       ],
     } : {}),
   };

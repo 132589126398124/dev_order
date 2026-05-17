@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getSession, hashPin, verifyPin } from "@/lib/auth";
+
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
+}
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -25,7 +36,8 @@ export async function POST(req: NextRequest) {
   if (settings?.adminPinHash) {
     valid = await verifyPin(currentPin, settings.adminPinHash);
   } else {
-    valid = currentPin === process.env.ADMIN_PIN;
+    const adminPin = process.env.ADMIN_PIN ?? "";
+    valid = adminPin.length > 0 && timingSafeStringEqual(currentPin, adminPin);
   }
 
   if (!valid) return NextResponse.json({ error: "현재 PIN이 올바르지 않습니다" }, { status: 401 });

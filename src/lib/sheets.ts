@@ -38,6 +38,15 @@ export async function ensureSheetHeaders() {
   }
 }
 
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    await new Promise((r) => setTimeout(r, 1000));
+    return fn();
+  }
+}
+
 export async function appendOrderToSheet(order: Order): Promise<number> {
   if (!isSheetsConfigured()) return -1;
   const sheets = getSheets();
@@ -54,13 +63,13 @@ export async function appendOrderToSheet(order: Order): Promise<number> {
     order.notes ?? "",
   ];
 
-  const res = await sheets.spreadsheets.values.append({
+  const res = await withRetry(() => sheets.spreadsheets.values.append({
     spreadsheetId: process.env.GOOGLE_SHEETS_ID!,
     range: `${SHEET_NAME}!A:J`,
     valueInputOption: "RAW",
     insertDataOption: "INSERT_ROWS",
     requestBody: { values: [row] },
-  });
+  }));
 
   const match = (res.data.updates?.updatedRange ?? "").match(/(\d+)$/);
   return match ? parseInt(match[1]) : -1;
@@ -68,10 +77,10 @@ export async function appendOrderToSheet(order: Order): Promise<number> {
 
 export async function updateOrderStatusInSheet(rowIndex: number, status: string) {
   if (rowIndex < 0 || !isSheetsConfigured()) return;
-  await getSheets().spreadsheets.values.update({
+  await withRetry(() => getSheets().spreadsheets.values.update({
     spreadsheetId: process.env.GOOGLE_SHEETS_ID!,
     range: `${SHEET_NAME}!I${rowIndex}`,
     valueInputOption: "RAW",
     requestBody: { values: [[status]] },
-  });
+  }));
 }

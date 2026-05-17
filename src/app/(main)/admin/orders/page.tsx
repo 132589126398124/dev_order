@@ -22,6 +22,7 @@ interface Props {
     date?: string;
     dateFrom?: string;
     dateTo?: string;
+    sort?: string;
   }>;
 }
 
@@ -29,9 +30,10 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
   const session = await getSession();
   if (!session?.isAdmin) redirect("/login");
 
-  const { status, search, page: pageStr, date, dateFrom, dateTo } = await searchParams;
+  const { status, search, page: pageStr, date, dateFrom, dateTo, sort } = await searchParams;
   const page = parseInt(pageStr ?? "1");
   const limit = 50;
+  const sortDir = sort === "asc" ? "asc" : "desc";
 
   const hasRange = !!(dateFrom || dateTo);
 
@@ -67,6 +69,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
     dateFrom?: string;
     dateTo?: string;
     page?: number;
+    sort?: string;
   }) => {
     const p = new URLSearchParams();
     if (params.status) p.set("status", params.status);
@@ -75,6 +78,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
     if (params.dateFrom) p.set("dateFrom", params.dateFrom);
     if (params.dateTo) p.set("dateTo", params.dateTo);
     if (params.page && params.page > 1) p.set("page", String(params.page));
+    if (params.sort && params.sort !== "desc") p.set("sort", params.sort);
     const qs = p.toString();
     return `/admin/orders${qs ? `?${qs}` : ""}`;
   };
@@ -84,7 +88,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
   const safeSkip = Number.isFinite((page - 1) * limit) ? (page - 1) * limit : 0;
 
   const [orders, total, todayCount, statusGroups] = await Promise.all([
-    prisma.order.findMany({ where, orderBy: { createdAt: "desc" }, skip: safeSkip, take: limit }),
+    prisma.order.findMany({ where, orderBy: { createdAt: sortDir }, skip: safeSkip, take: limit }),
     prisma.order.count({ where }),
     prisma.order.count({ where: { createdAt: { gte: todayStart } } }),
     prisma.order.groupBy({
@@ -153,10 +157,21 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         ))}
       </div>
 
-      {/* 검색 */}
-      <Suspense fallback={<div className="h-10 bg-slate-100 rounded-lg animate-pulse mb-4" />}>
-        <AdminSearch />
-      </Suspense>
+      {/* 검색 + 정렬 */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="flex-1">
+          <Suspense fallback={<div className="h-10 bg-slate-100 rounded-lg animate-pulse" />}>
+            <AdminSearch />
+          </Suspense>
+        </div>
+        <Link
+          href={buildHref({ status, search, date, dateFrom, dateTo, sort: sortDir === "desc" ? "asc" : "desc" })}
+          className="shrink-0 text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:border-slate-400 transition-colors whitespace-nowrap"
+          title="접수일 정렬"
+        >
+          접수일 {sortDir === "desc" ? "↓" : "↑"}
+        </Link>
+      </div>
 
       {/* 날짜 필터 */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -169,7 +184,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         ] as const).map(({ label, value }) => (
           <Link
             key={label}
-            href={buildHref({ status, search, date: value })}
+            href={buildHref({ status, search, date: value, sort })}
             className={`text-xs px-3 py-1 rounded-full transition-colors font-medium ${
               isPresetActive(value)
                 ? "bg-slate-900 text-white"
@@ -193,7 +208,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           return (
             <Link
               key={s ?? "all"}
-              href={buildHref({ status: s, search, date, dateFrom, dateTo })}
+              href={buildHref({ status: s, search, date, dateFrom, dateTo, sort })}
               className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors font-medium ${
                 active
                   ? "bg-slate-900 text-white"
@@ -234,22 +249,46 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       )}
 
       {/* 테이블 */}
-      <AdminOrdersTable orders={serializedOrders} currentUrl={buildHref({ status, search, date, dateFrom, dateTo, page })} />
+      <AdminOrdersTable orders={serializedOrders} currentUrl={buildHref({ status, search, date, dateFrom, dateTo, sort, page })} />
 
-      {/* 페이지네이션 */}
+      {/* 페이지네이션 (windowed) */}
       {totalPages > 1 && (
-        <div className="flex justify-center gap-1.5 mt-6">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Link
-              key={p}
-              href={buildHref({ status, search, date, dateFrom, dateTo, page: p })}
-              className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-medium transition-colors ${
-                page === p ? "bg-slate-900 text-white" : "hover:bg-slate-100 text-slate-600"
-              }`}
-            >
-              {p}
-            </Link>
-          ))}
+        <div className="flex justify-center items-center gap-1 mt-6">
+          {page > 1 && (
+            <Link href={buildHref({ status, search, date, dateFrom, dateTo, sort, page: page - 1 })} className="w-8 h-8 flex items-center justify-center rounded-xl text-sm text-slate-600 hover:bg-slate-100 transition-colors">‹</Link>
+          )}
+          {(() => {
+            const pages: (number | "...")[] = [];
+            const delta = 2;
+            const left = page - delta;
+            const right = page + delta;
+            let lastPage = 0;
+            for (let i = 1; i <= totalPages; i++) {
+              if (i === 1 || i === totalPages || (i >= left && i <= right)) {
+                if (lastPage && i - lastPage > 1) pages.push("...");
+                pages.push(i);
+                lastPage = i;
+              }
+            }
+            return pages.map((p, idx) =>
+              p === "..." ? (
+                <span key={`e${idx}`} className="w-8 h-8 flex items-center justify-center text-slate-400 text-sm">…</span>
+              ) : (
+                <Link
+                  key={p}
+                  href={buildHref({ status, search, date, dateFrom, dateTo, sort, page: p as number })}
+                  className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-medium transition-colors ${
+                    page === p ? "bg-slate-900 text-white" : "hover:bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {p}
+                </Link>
+              )
+            );
+          })()}
+          {page < totalPages && (
+            <Link href={buildHref({ status, search, date, dateFrom, dateTo, sort, page: page + 1 })} className="w-8 h-8 flex items-center justify-center rounded-xl text-sm text-slate-600 hover:bg-slate-100 transition-colors">›</Link>
+          )}
         </div>
       )}
     </main>

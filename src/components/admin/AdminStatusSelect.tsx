@@ -13,25 +13,43 @@ export default function AdminStatusSelect({ orderId, currentStatus }: Props) {
   const [loading, setLoading] = useState(false);
   const [pendingDone, setPendingDone] = useState(false);
   const [scanUrl, setScanUrl] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const submitStatus = async (newStatus: string, scanFileUrl?: string) => {
     setLoading(true);
-    const body: Record<string, string> = { status: newStatus };
-    if (scanFileUrl !== undefined) body.scanFileUrl = scanFileUrl;
-    const res = await fetch(`/api/orders/${orderId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (res.ok) setStatus(newStatus);
-    setLoading(false);
+    setSubmitError("");
+    try {
+      const body: Record<string, string> = { status: newStatus };
+      if (scanFileUrl !== undefined) body.scanFileUrl = scanFileUrl;
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setStatus(newStatus);
+      } else {
+        const json = await res.json().catch(() => ({}));
+        setSubmitError(json.error ?? "변경 실패");
+      }
+    } catch {
+      setSubmitError("서버 연결 실패");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const DESTRUCTIVE = new Set(["CANCELLED", "EXPIRED"]);
 
   const handleChange = (newStatus: string) => {
     if (newStatus === "DONE") {
       setPendingDone(true);
       setScanUrl("");
     } else {
+      if (DESTRUCTIVE.has(newStatus)) {
+        const label = (ORDER_STATUS_LABELS as Record<string, string>)[newStatus] ?? newStatus;
+        if (!window.confirm(`[${label}] 처리합니다. 계속하시겠습니까?`)) return;
+      }
       setPendingDone(false);
       submitStatus(newStatus);
     }
@@ -64,6 +82,7 @@ export default function AdminStatusSelect({ orderId, currentStatus }: Props) {
         ))}
       </select>
 
+      {submitError && <p className="text-[10px] text-red-500 mt-0.5">{submitError}</p>}
       {pendingDone && (
         <div className="flex flex-col gap-1 min-w-[180px]">
           <input

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { notFound, redirect } from "next/navigation";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import type { FilmItem } from "@/types/order";
@@ -9,10 +10,24 @@ import { SHOP_NAME } from "@/lib/shop";
 
 interface Props { params: Promise<{ id: string }> }
 
+const RESOLUTION_LABELS: Record<string, string> = {
+  standard: "",
+  high: " (고해상도)",
+  ultra: " (초고해상도)",
+};
+
 export default async function PrintPage({ params }: Props) {
   const { id } = await params;
-  const order = await prisma.order.findUnique({ where: { id } });
+  const [order, session] = await Promise.all([
+    prisma.order.findUnique({ where: { id } }),
+    getSession(),
+  ]);
   if (!order) notFound();
+
+  // Allow: admin, order owner (logged in), or non-member (no session, order has no userId)
+  if (session && !session.isAdmin && order.userId !== session.userId) {
+    redirect("/login");
+  }
 
   const filmItems = (order.filmItems ?? []) as FilmItem[];
   const createdAt = format(order.createdAt, "yyyy년 MM월 dd일 HH:mm", { locale: ko });
@@ -69,7 +84,7 @@ export default async function PrintPage({ params }: Props) {
                 <td style={{ padding: "6px 8px" }}>{item.format}</td>
                 <td style={{ padding: "6px 8px" }}>{item.quantity}롤</td>
                 <td style={{ padding: "6px 8px" }}>{item.process}</td>
-                <td style={{ padding: "6px 8px" }}>{item.scanType}</td>
+                <td style={{ padding: "6px 8px" }}>{item.scanType}{RESOLUTION_LABELS[item.scanResolution ?? "standard"] ?? ""}</td>
                 <td style={{ padding: "6px 8px" }}>{item.pushPull === "0" ? "표준" : `${item.pushPull} stop`}</td>
               </tr>
             ))}

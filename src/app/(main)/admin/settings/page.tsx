@@ -26,6 +26,7 @@ export default async function AdminSettingsPage() {
         pricing: (raw.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
         adminEmail: raw.adminEmail ?? null,
         resolutionConfig: (raw.resolutionConfig as unknown as ShopSettings["resolutionConfig"]) ?? DEFAULT_RESOLUTION_CONFIG,
+        autoExpireDays: raw.autoExpireDays ?? 7,
       }
     : DEFAULT_SETTINGS;
 
