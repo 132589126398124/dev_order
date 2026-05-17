@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { DEFAULT_SETTINGS } from "@/types/settings";
+import { DEFAULT_SETTINGS, DEFAULT_PRICING } from "@/types/settings";
 import type { ShopSettings } from "@/types/settings";
 
 function serialize(raw: {
@@ -13,6 +13,7 @@ function serialize(raw: {
   blockedFilms: string[];
   filmNotices: unknown;
   orderNotice: string | null;
+  pricing: unknown;
 }): ShopSettings {
   return {
     acceptPushPull: raw.acceptPushPull,
@@ -23,6 +24,7 @@ function serialize(raw: {
     blockedFilms: raw.blockedFilms,
     filmNotices: (raw.filmNotices as Record<string, string>) ?? {},
     orderNotice: raw.orderNotice,
+    pricing: (raw.pricing as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
   };
 }
 
@@ -48,6 +50,7 @@ export async function PATCH(req: Request) {
   if (Array.isArray(body.blockedFilms)) data.blockedFilms = body.blockedFilms;
   if (body.filmNotices !== undefined) data.filmNotices = body.filmNotices;
   if (body.orderNotice !== undefined) data.orderNotice = body.orderNotice || null;
+  if (body.pricing !== undefined) data.pricing = body.pricing;
 
   const raw = await prisma.shopSettings.upsert({
     where: { id: "singleton" },

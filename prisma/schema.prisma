@@ -36,6 +36,10 @@ model Order {
   editToken        String?     @unique
   editTokenExpires DateTime?
   sheetsRowIndex   Int?
+  trackingNumber   String?
+  courierName      String?
+  scanFileUrl      String?
+  adminNotes       String?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
@@ -54,6 +58,7 @@ model ShopSettings {
   blockedFilms        String[] @default([])
   filmNotices         Json     @default("{}")
   orderNotice         String?
+  pricing             Json     @default("{}")
   updatedAt           DateTime @updatedAt
 }
 

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import OrderForm from "@/components/order/OrderForm";
 import type { FilmItem } from "@/types/order";
-import { DEFAULT_SETTINGS } from "@/types/settings";
+import { DEFAULT_SETTINGS, DEFAULT_PRICING } from "@/types/settings";
 import type { ShopSettings } from "@/types/settings";
 
 export const metadata = { title: "접수 수정" };
@@ -29,6 +29,7 @@ export default async function EditOrderPage({ params }: Props) {
         blockedFilms: rawSettings.blockedFilms,
         filmNotices: (rawSettings.filmNotices as Record<string, string>) ?? {},
         orderNotice: rawSettings.orderNotice,
+        pricing: (rawSettings.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
       }
     : DEFAULT_SETTINGS;
 

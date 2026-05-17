@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { DEFAULT_SETTINGS } from "@/types/settings";
+import { DEFAULT_SETTINGS, DEFAULT_PRICING } from "@/types/settings";
 import type { ShopSettings } from "@/types/settings";
 
 export async function GET() {
@@ -15,6 +15,7 @@ export async function GET() {
     blockedFilms: raw.blockedFilms,
     filmNotices: (raw.filmNotices as Record<string, string>) ?? {},
     orderNotice: raw.orderNotice,
+    pricing: (raw.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
   };
   return NextResponse.json(settings);
 }

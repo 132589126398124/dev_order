@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import ShopSettingsForm from "@/components/admin/ShopSettingsForm";
-import { DEFAULT_SETTINGS } from "@/types/settings";
+import { DEFAULT_SETTINGS, DEFAULT_PRICING } from "@/types/settings";
 import type { ShopSettings } from "@/types/settings";
 import Link from "next/link";
 
@@ -23,6 +23,7 @@ export default async function AdminSettingsPage() {
         blockedFilms: raw.blockedFilms,
         filmNotices: (raw.filmNotices as Record<string, string>) ?? {},
         orderNotice: raw.orderNotice,
+        pricing: (raw.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
       }
     : DEFAULT_SETTINGS;
 

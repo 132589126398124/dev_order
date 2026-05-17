@@ -2,7 +2,7 @@ import OrderForm from "@/components/order/OrderForm";
 import Script from "next/script";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { DEFAULT_SETTINGS } from "@/types/settings";
+import { DEFAULT_SETTINGS, DEFAULT_PRICING } from "@/types/settings";
 import type { ShopSettings } from "@/types/settings";
 import Link from "next/link";
 
@@ -25,6 +25,7 @@ export default async function NewOrderPage() {
         blockedFilms: rawSettings.blockedFilms,
         filmNotices: (rawSettings.filmNotices as Record<string, string>) ?? {},
         orderNotice: rawSettings.orderNotice,
+        pricing: (rawSettings.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
       }
     : DEFAULT_SETTINGS;
 

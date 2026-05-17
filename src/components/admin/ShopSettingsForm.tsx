@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { searchFilms } from "@/data/films";
 import type { FilmEntry } from "@/data/films";
 import type { ShopSettings } from "@/types/settings";
+import { DEFAULT_PRICING } from "@/types/settings";
 
 const ALL_PROCESSES = ["C-41", "ECN-2", "B&W", "E-6", "기타"] as const;
 const ALL_SCAN_TYPES = ["없음", "JPG", "TIFF", "JPG+TIFF"] as const;
@@ -264,6 +265,124 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
           placeholder="공지사항 입력..."
           className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none transition-all resize-none placeholder:text-slate-400"
         />
+      </div>
+
+      {/* 요금 설정 */}
+      <div className={cardCls}>
+        <div>
+          <h2 className="font-semibold text-slate-900">요금 설정</h2>
+          <p className="text-xs text-slate-400 mt-0.5">접수 폼에 요금 안내로 표시됩니다. 0원 항목은 표시 안 됨.</p>
+        </div>
+
+        <div>
+          <p className="text-sm font-medium text-slate-700 mb-2">현상 프로세스 (원/롤)</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {ALL_PROCESSES.map((p) => (
+              <div key={p}>
+                <label className="text-xs text-slate-500 mb-1 block">{p}</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={100}
+                  value={s.pricing?.processes?.[p] ?? 0}
+                  onChange={(e) =>
+                    setS((prev) => ({
+                      ...prev,
+                      pricing: {
+                        ...(prev.pricing ?? DEFAULT_PRICING),
+                        processes: {
+                          ...(prev.pricing?.processes ?? {}),
+                          [p]: parseInt(e.target.value) || 0,
+                        },
+                      },
+                    }))
+                  }
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-sm font-medium text-slate-700 mb-2">스캔 타입 (원/롤)</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {ALL_SCAN_TYPES.map((t) => (
+              <div key={t}>
+                <label className="text-xs text-slate-500 mb-1 block">{t}</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={100}
+                  value={s.pricing?.scanTypes?.[t] ?? 0}
+                  onChange={(e) =>
+                    setS((prev) => ({
+                      ...prev,
+                      pricing: {
+                        ...(prev.pricing ?? DEFAULT_PRICING),
+                        scanTypes: {
+                          ...(prev.pricing?.scanTypes ?? {}),
+                          [t]: parseInt(e.target.value) || 0,
+                        },
+                      },
+                    }))
+                  }
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">고해상도 추가금 (원/롤)</label>
+            <input
+              type="number"
+              min={0}
+              step={100}
+              value={s.pricing?.scanHighExtra ?? 0}
+              onChange={(e) =>
+                setS((prev) => ({
+                  ...prev,
+                  pricing: { ...(prev.pricing ?? DEFAULT_PRICING), scanHighExtra: parseInt(e.target.value) || 0 },
+                }))
+              }
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">하프프레임 추가금 (원/롤)</label>
+            <input
+              type="number"
+              min={0}
+              step={100}
+              value={s.pricing?.halfFrameExtra ?? 0}
+              onChange={(e) =>
+                setS((prev) => ({
+                  ...prev,
+                  pricing: { ...(prev.pricing ?? DEFAULT_PRICING), halfFrameExtra: parseInt(e.target.value) || 0 },
+                }))
+              }
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs text-slate-500 mb-1 block">요금 안내 추가 문구</label>
+          <input
+            value={s.pricing?.note ?? ""}
+            onChange={(e) =>
+              setS((prev) => ({
+                ...prev,
+                pricing: { ...(prev.pricing ?? DEFAULT_PRICING), note: e.target.value },
+              }))
+            }
+            placeholder="예: 부속 추가 시 별도 협의 / 최소 요금 5,000원"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400"
+          />
+        </div>
       </div>
 
       {saveError && <p className="text-sm text-red-500 text-center">{saveError}</p>}
