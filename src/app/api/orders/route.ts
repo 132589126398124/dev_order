@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
 
     const session = await getSession();
     const { recaptchaToken, filmItems, ...rest } = parsed.data;
+    // Admin session uses "admin" as userId (not a real DB record) — don't link
+    const linkedUserId = session && !session.isAdmin ? session.userId : null;
 
     const uniqueCode = generateUniqueCode();
     const editToken = tokenGen();
@@ -47,7 +49,7 @@ export async function POST(req: NextRequest) {
         ...rest,
         filmItems: filmItems as any,
         uniqueCode,
-        userId: session?.userId ?? null,
+        userId: linkedUserId,
         editToken,
         editTokenExpires,
       },
