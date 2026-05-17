@@ -7,6 +7,8 @@ import Script from "next/script";
 import { orderSchema, OrderFormData, FilmItem, DEFAULT_FILM_ITEM } from "@/types/order";
 import FilmSearch from "./FilmSearch";
 import type { FilmEntry } from "@/data/films";
+import type { ShopSettings } from "@/types/settings";
+import { DEFAULT_SETTINGS } from "@/types/settings";
 
 declare global {
   interface Window {
@@ -36,6 +38,7 @@ interface Props {
   defaultValues?: Partial<OrderFormData>;
   editToken?: string;
   userId?: string;
+  settings?: ShopSettings;
 }
 
 const inputCls = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400";
@@ -49,6 +52,10 @@ interface SavedProfile {
   profileAddress?: string | null;
 }
 
+const ALL_PROCESSES = ["C-41", "ECN-2", "B&W", "E-6", "기타"] as const;
+const ALL_SCAN_TYPES = ["없음", "JPG", "TIFF", "JPG+TIFF"] as const;
+const ALL_RESOLUTIONS = ["standard", "high"] as const;
+
 function FilmItemRow({
   item,
   index,
@@ -57,6 +64,7 @@ function FilmItemRow({
   onDuplicate,
   canRemove,
   errors,
+  settings,
 }: {
   item: FilmItem;
   index: number;
@@ -65,7 +73,29 @@ function FilmItemRow({
   onDuplicate: (index: number) => void;
   canRemove: boolean;
   errors: Record<string, string>;
+  settings: ShopSettings;
 }) {
+  const availableProcesses = ALL_PROCESSES.filter((p) => !settings.disabledProcesses.includes(p));
+  const availableScanTypes = ALL_SCAN_TYPES.filter((t) => !settings.disabledScanTypes.includes(t));
+  const availableResolutions = ALL_RESOLUTIONS.filter((r) => !settings.disabledResolutions.includes(r));
+
+  const isFilmBlocked = settings.blockedFilms.includes(item.filmType);
+  const filmNotice = settings.filmNotices[item.filmType];
+
+  useEffect(() => {
+    if (availableProcesses.length > 0 && !availableProcesses.includes(item.process as typeof ALL_PROCESSES[number])) {
+      onChange(index, "process", availableProcesses[0]);
+    }
+    if (availableScanTypes.length > 0 && !availableScanTypes.includes(item.scanType as typeof ALL_SCAN_TYPES[number])) {
+      onChange(index, "scanType", availableScanTypes[0]);
+    }
+    const res = (item.scanResolution ?? "standard") as typeof ALL_RESOLUTIONS[number];
+    if (availableResolutions.length > 0 && !availableResolutions.includes(res)) {
+      onChange(index, "scanResolution", availableResolutions[0]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.disabledProcesses, settings.disabledScanTypes, settings.disabledResolutions]);
+
   const handleFilmSelect = (film: FilmEntry) => {
     onChange(index, "filmType", film.name);
     onChange(index, "process", film.process);
@@ -111,6 +141,12 @@ function FilmItemRow({
           error={!!errors.filmType}
         />
         {errors.filmType && <p className="text-xs text-red-500 mt-1">{errors.filmType}</p>}
+        {isFilmBlocked && (
+          <div className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2">
+            <span>⚠</span>
+            <span>{filmNotice || "해당 필름은 현재 접수가 제한될 수 있습니다. 접수 전 문의 바랍니다."}</span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -158,11 +194,11 @@ function FilmItemRow({
             onChange={(e) => onChange(index, "process", e.target.value)}
             className={selectCls}
           >
-            <option value="C-41">C-41 (컬러 네거티브)</option>
-            <option value="ECN-2">ECN-2 (시네마)</option>
-            <option value="B&W">B&W (흑백)</option>
-            <option value="E-6">E-6 (슬라이드)</option>
-            <option value="기타">기타</option>
+            {availableProcesses.includes("C-41") && <option value="C-41">C-41 (컬러 네거티브)</option>}
+            {availableProcesses.includes("ECN-2") && <option value="ECN-2">ECN-2 (시네마)</option>}
+            {availableProcesses.includes("B&W") && <option value="B&W">B&W (흑백)</option>}
+            {availableProcesses.includes("E-6") && <option value="E-6">E-6 (슬라이드)</option>}
+            {availableProcesses.includes("기타") && <option value="기타">기타</option>}
           </select>
           <p className="text-xs text-slate-400 mt-1">{PROCESS_DESC[item.process]}</p>
         </div>
@@ -173,19 +209,19 @@ function FilmItemRow({
             onChange={(e) => onChange(index, "scanType", e.target.value)}
             className={selectCls}
           >
-            <option value="없음">스캔 없음</option>
-            <option value="JPG">JPG</option>
-            <option value="TIFF">TIFF</option>
-            <option value="JPG+TIFF">JPG + TIFF</option>
+            {availableScanTypes.includes("없음") && <option value="없음">스캔 없음</option>}
+            {availableScanTypes.includes("JPG") && <option value="JPG">JPG</option>}
+            {availableScanTypes.includes("TIFF") && <option value="TIFF">TIFF</option>}
+            {availableScanTypes.includes("JPG+TIFF") && <option value="JPG+TIFF">JPG + TIFF</option>}
           </select>
         </div>
       </div>
 
-      {item.scanType !== "없음" && (
+      {item.scanType !== "없음" && availableResolutions.length > 1 && (
         <div>
           <label className={labelCls}>스캔 해상도</label>
           <div className="flex gap-2">
-            {(["standard", "high"] as const).map((res) => (
+            {availableResolutions.map((res) => (
               <label
                 key={res}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border-2 cursor-pointer transition-all text-xs font-medium ${
@@ -209,23 +245,25 @@ function FilmItemRow({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelCls}>증감</label>
-          <select
-            value={item.pushPull}
-            onChange={(e) => onChange(index, "pushPull", e.target.value)}
-            className={selectCls}
-          >
-            <option value="-3">-3 stop</option>
-            <option value="-2">-2 stop</option>
-            <option value="-1">-1 stop</option>
-            <option value="0">표준</option>
-            <option value="+1">+1 stop</option>
-            <option value="+2">+2 stop</option>
-            <option value="+3">+3 stop</option>
-          </select>
-        </div>
+      <div className={`grid gap-3 ${settings.acceptPushPull ? "grid-cols-2" : "grid-cols-1"}`}>
+        {settings.acceptPushPull && (
+          <div>
+            <label className={labelCls}>증감</label>
+            <select
+              value={item.pushPull}
+              onChange={(e) => onChange(index, "pushPull", e.target.value)}
+              className={selectCls}
+            >
+              <option value="-3">-3 stop</option>
+              <option value="-2">-2 stop</option>
+              <option value="-1">-1 stop</option>
+              <option value="0">표준</option>
+              <option value="+1">+1 stop</option>
+              <option value="+2">+2 stop</option>
+              <option value="+3">+3 stop</option>
+            </select>
+          </div>
+        )}
         <div>
           <label className={labelCls}>EI (감도)</label>
           <input
@@ -237,21 +275,23 @@ function FilmItemRow({
         </div>
       </div>
 
-      <label className="flex items-center gap-2.5 cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={item.halfFrame}
-          onChange={(e) => onChange(index, "halfFrame", e.target.checked)}
-          className="w-4 h-4 rounded border-slate-300 accent-slate-900 cursor-pointer"
-        />
-        <span className="text-sm text-slate-700">하프 프레임 촬영</span>
-        <span className="text-xs text-slate-400">(한 컷을 두 장으로 분할 촬영)</span>
-      </label>
+      {settings.acceptHalfFrame && (
+        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={item.halfFrame}
+            onChange={(e) => onChange(index, "halfFrame", e.target.checked)}
+            className="w-4 h-4 rounded border-slate-300 accent-slate-900 cursor-pointer"
+          />
+          <span className="text-sm text-slate-700">하프 프레임 촬영</span>
+          <span className="text-xs text-slate-400">(한 컷을 두 장으로 분할 촬영)</span>
+        </label>
+      )}
     </div>
   );
 }
 
-export default function OrderForm({ defaultValues, editToken, userId }: Props) {
+export default function OrderForm({ defaultValues, editToken, userId, settings = DEFAULT_SETTINGS }: Props) {
   const router = useRouter();
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   const formRef = useRef<HTMLFormElement>(null);
@@ -514,6 +554,13 @@ export default function OrderForm({ defaultValues, editToken, userId }: Props) {
     <>
       <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="lazyOnload" />
 
+      {/* Order notice from admin */}
+      {settings.orderNotice && (
+        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+          {settings.orderNotice}
+        </div>
+      )}
+
       {/* Draft restore banner */}
       {draftBanner && (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
@@ -623,6 +670,7 @@ export default function OrderForm({ defaultValues, editToken, userId }: Props) {
                 onDuplicate={duplicateFilmItem}
                 canRemove={filmItems.length > 1}
                 errors={itemErrors}
+                settings={settings}
               />
             );
           })}

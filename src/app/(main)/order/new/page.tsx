@@ -1,13 +1,32 @@
 import OrderForm from "@/components/order/OrderForm";
 import Script from "next/script";
 import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { DEFAULT_SETTINGS } from "@/types/settings";
+import type { ShopSettings } from "@/types/settings";
 import Link from "next/link";
 
 export const metadata = { title: "접수 신청" };
 
 export default async function NewOrderPage() {
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-  const session = await getSession();
+  const [session, rawSettings] = await Promise.all([
+    getSession(),
+    prisma.shopSettings.findUnique({ where: { id: "singleton" } }),
+  ]);
+
+  const settings: ShopSettings = rawSettings
+    ? {
+        acceptPushPull: rawSettings.acceptPushPull,
+        acceptHalfFrame: rawSettings.acceptHalfFrame,
+        disabledProcesses: rawSettings.disabledProcesses,
+        disabledScanTypes: rawSettings.disabledScanTypes,
+        disabledResolutions: rawSettings.disabledResolutions,
+        blockedFilms: rawSettings.blockedFilms,
+        filmNotices: (rawSettings.filmNotices as Record<string, string>) ?? {},
+        orderNotice: rawSettings.orderNotice,
+      }
+    : DEFAULT_SETTINGS;
 
   return (
     <>
@@ -32,7 +51,7 @@ export default async function NewOrderPage() {
             </Link>
           </div>
         )}
-        <OrderForm userId={session?.userId} />
+        <OrderForm userId={session?.userId} settings={settings} />
       </main>
     </>
   );

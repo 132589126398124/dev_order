@@ -11,7 +11,7 @@ export default async function HomePage() {
           필름 현상 · 스캔 · 택배 접수
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight mb-4">
-          KDL 현상소
+          현상 의뢰
         </h1>
         <p className="text-slate-500 text-lg max-w-sm mx-auto">
           온라인으로 간편하게 접수하고 택배로 필름을 보내주세요

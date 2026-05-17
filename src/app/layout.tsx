@@ -13,13 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "KDL 현상소", template: "%s | KDL 현상소" },
+  title: { default: "현상 의뢰", template: "%s | 현상 의뢰" },
   description: "필름 현상 및 스캔 택배 접수 서비스",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "KDL현상소",
+    title: "현상 의뢰",
   },
 };
 

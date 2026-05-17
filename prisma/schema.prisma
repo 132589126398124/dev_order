@@ -38,6 +38,23 @@ model Order {
   sheetsRowIndex   Int?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model ShopSettings {
+  id                  String   @id @default("singleton")
+  acceptPushPull      Boolean  @default(true)
+  acceptHalfFrame     Boolean  @default(true)
+  disabledProcesses   String[] @default([])
+  disabledScanTypes   String[] @default([])
+  disabledResolutions String[] @default([])
+  blockedFilms        String[] @default([])
+  filmNotices         Json     @default("{}")
+  orderNotice         String?
+  updatedAt           DateTime @updatedAt
 }
 
 enum OrderStatus {

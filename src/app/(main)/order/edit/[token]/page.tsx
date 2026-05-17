@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import OrderForm from "@/components/order/OrderForm";
 import type { FilmItem } from "@/types/order";
+import { DEFAULT_SETTINGS } from "@/types/settings";
+import type { ShopSettings } from "@/types/settings";
 
 export const metadata = { title: "접수 수정" };
 
@@ -11,10 +13,24 @@ interface Props { params: Promise<{ token: string }> }
 export default async function EditOrderPage({ params }: Props) {
   const { token } = await params;
 
-  const [order, session] = await Promise.all([
+  const [order, session, rawSettings] = await Promise.all([
     prisma.order.findUnique({ where: { editToken: token } }),
     getSession(),
+    prisma.shopSettings.findUnique({ where: { id: "singleton" } }),
   ]);
+
+  const settings: ShopSettings = rawSettings
+    ? {
+        acceptPushPull: rawSettings.acceptPushPull,
+        acceptHalfFrame: rawSettings.acceptHalfFrame,
+        disabledProcesses: rawSettings.disabledProcesses,
+        disabledScanTypes: rawSettings.disabledScanTypes,
+        disabledResolutions: rawSettings.disabledResolutions,
+        blockedFilms: rawSettings.blockedFilms,
+        filmNotices: (rawSettings.filmNotices as Record<string, string>) ?? {},
+        orderNotice: rawSettings.orderNotice,
+      }
+    : DEFAULT_SETTINGS;
 
   // 로그인한 회원이 본인 주문이면 토큰 만료 무시
   const isOwner = session && !session.isAdmin && order?.userId === session.userId;
@@ -57,6 +73,7 @@ export default async function EditOrderPage({ params }: Props) {
       <OrderForm
         editToken={token}
         userId={session?.userId}
+        settings={settings}
         defaultValues={{
           customerName: order.customerName,
           phone: order.phone,

@@ -153,18 +153,20 @@ export const FILMS: FilmEntry[] = [
   { id: "bergger-pancro-400", name: "Bergger Pancro 400", brand: "Bergger", iso: 400, process: "B&W", formats: ["135", "120", "4x5", "8x10"], aliases: ["베거", "팡크로", "pancro", "pancro400"] },
 
   // ── ORWO Wolfen ──────────────────────────────────────────────────────────────
-  { id: "wolfen-nc500", name: "ORWO Wolfen NC500", brand: "ORWO", iso: 400, process: "C-41", formats: ["135"], aliases: ["볼펜NC500", "NC500", "orwonc500", "wolfennc500"] },
-  { id: "wolfen-nc400", name: "ORWO Wolfen NC400", brand: "ORWO", iso: 400, process: "C-41", formats: ["135"], aliases: ["볼펜NC400", "NC400", "orwonc400", "wolfennc400"] },
-  { id: "wolfen-nc200", name: "ORWO Wolfen NC200", brand: "ORWO", iso: 200, process: "C-41", formats: ["135"], aliases: ["볼펜NC200", "NC200", "orwonc200", "wolfennc200"] },
-  { id: "wolfen-np100", name: "ORWO Wolfen NP100", brand: "ORWO", iso: 100, process: "B&W", formats: ["135"], aliases: ["볼펜NP100", "NP100", "wolfennp100"] },
-  { id: "wolfen-un54", name: "ORWO Wolfen UN54", brand: "ORWO", iso: 100, process: "B&W", formats: ["135"], aliases: ["볼펜UN54", "UN54", "wolfenun54"] },
-  { id: "wolfen-p400", name: "ORWO Wolfen P400", brand: "ORWO", iso: 400, process: "B&W", formats: ["135"], aliases: ["볼펜P400", "wolfenP400"] },
+  { id: "wolfen-nc500", name: "ORWO Wolfen NC500", brand: "ORWO", iso: 400, process: "C-41", formats: ["135"], aliases: ["오르오", "오르보", "볼펜NC500", "NC500", "orwonc500", "wolfennc500"] },
+  { id: "wolfen-nc400", name: "ORWO Wolfen NC400", brand: "ORWO", iso: 400, process: "C-41", formats: ["135"], aliases: ["오르오", "오르보", "볼펜NC400", "NC400", "orwonc400", "wolfennc400"] },
+  { id: "wolfen-nc200", name: "ORWO Wolfen NC200", brand: "ORWO", iso: 200, process: "C-41", formats: ["135"], aliases: ["오르오", "오르보", "볼펜NC200", "NC200", "orwonc200", "wolfennc200"] },
+  { id: "wolfen-np100", name: "ORWO Wolfen NP100", brand: "ORWO", iso: 100, process: "B&W", formats: ["135"], aliases: ["오르오", "오르보", "볼펜NP100", "NP100", "wolfennp100"] },
+  { id: "wolfen-un54", name: "ORWO Wolfen UN54", brand: "ORWO", iso: 100, process: "B&W", formats: ["135"], aliases: ["오르오", "오르보", "볼펜UN54", "UN54", "wolfenun54"] },
+  { id: "wolfen-p400", name: "ORWO Wolfen P400", brand: "ORWO", iso: 400, process: "B&W", formats: ["135"], aliases: ["오르오", "오르보", "볼펜P400", "wolfenP400"] },
 
   // ── 기타 ─────────────────────────────────────────────────────────────────────
   { id: "kodak-aerocolor-iv", name: "Kodak Aerocolor IV 2460", brand: "Kodak", iso: 100, process: "C-41", formats: ["135"], aliases: ["에어로컬러", "에어로컬러IV", "aerocolor", "aerocoloriv", "2460"] },
   { id: "flicfilm-elektra-100", name: "Flic Film Elektra 100", brand: "Flic Film", iso: 100, process: "C-41", formats: ["135"], aliases: ["일렉트라", "엘렉트라", "elektra", "elektra100"] },
   { id: "washi-x", name: "Film Washi X", brand: "Film Washi", iso: 100, process: "C-41", formats: ["135"], aliases: ["와시X", "washi-x", "washix"] },
   { id: "reflx-lab-pro-100", name: "Reflx Lab Pro 100", brand: "Reflx Lab", iso: 100, process: "C-41", formats: ["135"], aliases: ["리플렉스 프로100", "reflx pro 100", "reflxpro100"] },
+  { id: "reflx-lab-800t", name: "Reflx Lab 800T", brand: "Reflx Lab", iso: 800, process: "C-41", formats: ["135"], aliases: ["리플렉스랩 800t", "reflxlab 800t", "중네스틸"] },
+  { id: "reflx-lab-400d", name: "Reflx Lab 400D", brand: "Reflx Lab", iso: 400, process: "C-41", formats: ["135"], aliases: ["리플렉스랩 400d", "reflxlab 400d", "중네스틸"] },
   { id: "agfaphoto-apx-100", name: "AgfaPhoto APX 100", brand: "AgfaPhoto", iso: 100, process: "B&W", formats: ["135", "120"], aliases: ["아그파 APX100", "APX100", "apx100"] },
   { id: "agfaphoto-apx-400", name: "AgfaPhoto APX 400", brand: "AgfaPhoto", iso: 400, process: "B&W", formats: ["135", "120"], aliases: ["아그파 APX400", "APX400", "apx400"] },
   { id: "agfa-vista-200", name: "AgfaPhoto Vista Plus 200", brand: "AgfaPhoto", iso: 200, process: "C-41", formats: ["135"], aliases: ["아그파 비스타200", "비스타200", "vista200", "vistaplus200"], discontinued: true },
@@ -174,6 +176,7 @@ export const FILMS: FilmEntry[] = [
   { id: "ferrania-orto", name: "Ferrania Orto", brand: "Ferrania", iso: 50, process: "B&W", formats: ["135"], aliases: ["페라니아 오르토", "ferrania ortho", "ferraniaorto"] },
   { id: "shanghai-gp3-100", name: "Shanghai GP3 100", brand: "Shanghai", iso: 100, process: "B&W", formats: ["120", "4x5"], aliases: ["상하이 GP3", "GP3", "shanghaigp3"] },
   { id: "lucky-shd-100", name: "Lucky SHD 100", brand: "Lucky", iso: 100, process: "B&W", formats: ["135"], aliases: ["럭키 SHD100", "SHD100", "luckyshd100"] },
+  { id: "lucky-color-200", name: "Lucky Color 200", brand: "Lucky", iso: 200, process: "C-41", formats: ["135"], aliases: ["럭키 200", "럭키200", "lucky200"] },
 ];
 
 // 필름명 + 별명으로 검색 (공백 무시, 대소문자 무시)
