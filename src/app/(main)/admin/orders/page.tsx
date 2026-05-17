@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ORDER_STATUS_LABELS } from "@/types/order";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Prisma } from "@prisma/client";
 import { startOfDay, endOfDay, subDays, format } from "date-fns";
 import { ko } from "date-fns/locale";
 import AdminSearch from "@/components/admin/AdminSearch";
@@ -81,18 +81,23 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
 
   const todayStart = startOfDay(new Date());
 
-  const ALL_STATUSES = Object.values(OrderStatus);
+  const safeSkip = Number.isFinite((page - 1) * limit) ? (page - 1) * limit : 0;
 
-  const [orders, total, todayCount, grandTotal, ...perStatusCounts] = await Promise.all([
-    prisma.order.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * limit, take: limit }),
+  const [orders, total, todayCount, statusGroups] = await Promise.all([
+    prisma.order.findMany({ where, orderBy: { createdAt: "desc" }, skip: safeSkip, take: limit }),
     prisma.order.count({ where }),
     prisma.order.count({ where: { createdAt: { gte: todayStart } } }),
-    prisma.order.count({}),
-    ...ALL_STATUSES.map((s) => prisma.order.count({ where: { status: s } })),
+    prisma.order.groupBy({
+      by: [Prisma.OrderScalarFieldEnum.status],
+      _count: { _all: true },
+    }),
   ]);
 
   const totalPages = Math.ceil(total / limit);
-  const statusCounts = Object.fromEntries(ALL_STATUSES.map((s, i) => [s, perStatusCounts[i]]));
+  const statusCounts = Object.fromEntries(
+    (statusGroups as { status: string; _count: { _all: number } }[]).map((g) => [g.status, g._count._all])
+  );
+  const grandTotal = (statusGroups as { _count: { _all: number } }[]).reduce((s, g) => s + g._count._all, 0);
 
   const serializedOrders = orders.map((o) => ({
     id: o.id,
@@ -229,7 +234,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       )}
 
       {/* 테이블 */}
-      <AdminOrdersTable orders={serializedOrders} />
+      <AdminOrdersTable orders={serializedOrders} currentUrl={buildHref({ status, search, date, dateFrom, dateTo, page })} />
 
       {/* 페이지네이션 */}
       {totalPages > 1 && (

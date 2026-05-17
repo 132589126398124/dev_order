@@ -20,7 +20,7 @@ export interface OrderRow {
   createdAt: string;
 }
 
-export default function AdminOrdersTable({ orders }: { orders: OrderRow[] }) {
+export default function AdminOrdersTable({ orders, currentUrl }: { orders: OrderRow[]; currentUrl: string }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [batchStatus, setBatchStatus] = useState("SHIPPED");
@@ -60,7 +60,7 @@ export default function AdminOrdersTable({ orders }: { orders: OrderRow[] }) {
       const json = await res.json();
       if (res.ok) {
         setSelected(new Set());
-        router.refresh();
+        router.replace(currentUrl);
       } else {
         setBatchError(json.error ?? "오류가 발생했습니다");
       }
