@@ -84,7 +84,7 @@ export default async function CompletePage({ params }: Props) {
             <p className="text-xs text-slate-500 mb-2">필름 목록</p>
             <div className="space-y-1.5">
               {filmItems.map((item, i) => (
-                <div key={i} className="text-sm text-slate-700 bg-slate-50 rounded-xl px-3 py-2">
+                <div key={i} className="text-sm text-slate-700 bg-slate-50 rounded-xl px-3 py-2 truncate">
                   {item.filmType} · {item.format} · {item.quantity}롤 · {item.process}
                 </div>
               ))}

@@ -343,7 +343,7 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
                   className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors text-left ${filmResultIndex === idx ? "bg-slate-100" : "hover:bg-slate-50"}`}
                 >
                   <span className="font-medium text-slate-900">{f.name}</span>
-                  <span className="text-xs text-slate-500 shrink-0 ml-2">{f.brand} · {f.process}</span>
+                  <span className="text-xs text-slate-500 shrink-0 ml-2 whitespace-nowrap">{f.brand} · {f.process}</span>
                 </button>
               ))}
             </div>
@@ -397,7 +397,7 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
       <div className={cardCls}>
         <div>
           <h2 className="font-semibold text-slate-900">요금 설정</h2>
-          <p className="text-xs text-slate-400 mt-0.5">프로세스별로 현상·스캔 요금을 설정합니다. 0원 항목은 접수 폼에 표시되지 않습니다.</p>
+          <p className="text-xs text-slate-400 mt-0.5 break-keep">프로세스별로 현상·스캔 요금을 설정합니다. 0원 항목은 접수 폼에 표시되지 않습니다.</p>
         </div>
 
         <div className="overflow-x-auto">

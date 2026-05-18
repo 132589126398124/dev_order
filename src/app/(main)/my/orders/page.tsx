@@ -56,7 +56,7 @@ export default async function MyOrdersPage() {
                     <p className="font-mono font-bold text-slate-900 text-sm">{order.uniqueCode}</p>
                     <div className="mt-1 space-y-0.5">
                       {items.length > 0 ? items.map((item, i) => (
-                        <p key={i} className="text-xs text-slate-500">
+                        <p key={i} className="text-xs text-slate-500 truncate">
                           {item.filmType} · {item.format} · {item.quantity}롤 · {item.process}
                         </p>
                       )) : (

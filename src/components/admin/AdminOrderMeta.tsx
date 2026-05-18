@@ -52,7 +52,7 @@ export default function AdminOrderMeta({
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 space-y-4">
-      <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">관리자 메모 · 배송 정보</h2>
+      <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">관리자 메모 · 배송 정보</h2>
 
       <div className="grid grid-cols-2 gap-3">
         <div>

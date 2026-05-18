@@ -67,7 +67,7 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className={labelCls}>이메일 <span className="text-slate-400 font-normal">(선택사항 · PIN 찾기용)</span></label>
+            <label className={labelCls}>이메일 <span className="text-slate-400 font-normal whitespace-nowrap">(선택사항 · PIN 찾기용)</span></label>
             <input value={form.email} onChange={set("email")} type="email" className={inputCls} placeholder="example@email.com" autoComplete="email" />
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}

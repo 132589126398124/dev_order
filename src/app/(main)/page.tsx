@@ -16,7 +16,7 @@ export default async function HomePage() {
           필름을 보내주세요.<br />
           <span className="text-slate-400">나머지는 저희가.</span>
         </h1>
-        <p className="text-slate-500 text-base md:text-lg max-w-xs mx-auto leading-relaxed mb-10">
+        <p className="text-slate-500 text-sm md:text-base whitespace-nowrap mx-auto mb-10">
           온라인 접수 → 택배 발송 → 현상·스캔 → 반송
         </p>
 
@@ -77,7 +77,7 @@ export default async function HomePage() {
                 <span className="text-[10px] font-mono font-bold text-slate-300 tracking-widest">{num}</span>
               </div>
               <h3 className="font-semibold text-slate-900 mb-1.5 text-[15px]">{title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
+              <p className="text-sm text-slate-500 leading-relaxed break-keep">{desc}</p>
             </div>
           ))}
         </div>
