@@ -15,6 +15,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const body = await req.json();
   const { status, trackingNumber, courierName, scanFileUrl, adminNotes } = body;
 
+  if (trackingNumber !== undefined && trackingNumber && typeof trackingNumber === "string" && trackingNumber.length > 100) {
+    return NextResponse.json({ error: "운송장 번호는 100자 이하로 입력해주세요" }, { status: 400 });
+  }
+  if (courierName !== undefined && courierName && typeof courierName === "string" && courierName.length > 50) {
+    return NextResponse.json({ error: "택배사명은 50자 이하로 입력해주세요" }, { status: 400 });
+  }
+  if (scanFileUrl !== undefined && scanFileUrl && typeof scanFileUrl === "string" && scanFileUrl.length > 500) {
+    return NextResponse.json({ error: "스캔 파일 링크는 500자 이하로 입력해주세요" }, { status: 400 });
+  }
+  if (adminNotes !== undefined && adminNotes && typeof adminNotes === "string" && adminNotes.length > 2000) {
+    return NextResponse.json({ error: "메모는 2000자 이하로 입력해주세요" }, { status: 400 });
+  }
+
   const data: Record<string, unknown> = {};
   let statusChanged = false;
 

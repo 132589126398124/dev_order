@@ -3,6 +3,15 @@ import { SHOP_NAME } from "@/lib/shop";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 function isEmailConfigured(): boolean {
   return !!(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
 }
@@ -42,9 +51,9 @@ export async function sendEditLink(email: string, customerName: string, uniqueCo
     to: email,
     subject: `[${SHOP_NAME}] 접수 내역 수정 링크 - ${uniqueCode}`,
     html: emailWrapper(`
-      <p style="margin:0 0 16px">${customerName}님, 안녕하세요.</p>
+      <p style="margin:0 0 16px">${escapeHtml(customerName)}님, 안녕하세요.</p>
       <p style="margin:0 0 8px">접수 내역 수정 링크입니다. <strong>48시간</strong> 이내에 사용해주세요.</p>
-      <p style="margin:0 0 16px">고유코드: <strong style="font-family:monospace">${uniqueCode}</strong></p>
+      <p style="margin:0 0 16px">고유코드: <strong style="font-family:monospace">${escapeHtml(uniqueCode)}</strong></p>
       <a href="${link}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600">접수 내역 수정하기</a>
     `),
   });
@@ -61,23 +70,23 @@ export async function sendStatusNotification(
   const messages: Record<string, { subject: string; body: string }> = {
     SHIPPED: {
       subject: `[${SHOP_NAME}] 필름 수령 확인 - ${uniqueCode}`,
-      body: `<p style="margin:0 0 12px">${customerName}님의 필름이 도착했습니다.</p><p style="margin:0 0 16px">현상 작업을 곧 시작할 예정입니다. 진행 상황은 아래 링크에서 확인하실 수 있습니다.</p>`,
+      body: `<p style="margin:0 0 12px">${escapeHtml(customerName)}님의 필름이 도착했습니다.</p><p style="margin:0 0 16px">현상 작업을 곧 시작할 예정입니다. 진행 상황은 아래 링크에서 확인하실 수 있습니다.</p>`,
     },
     PROCESSING: {
       subject: `[${SHOP_NAME}] 현상 작업 시작 - ${uniqueCode}`,
-      body: `<p style="margin:0 0 12px">${customerName}님의 필름 현상 작업을 시작했습니다.</p><p style="margin:0 0 16px">완료되면 다시 안내 드리겠습니다.</p>`,
+      body: `<p style="margin:0 0 12px">${escapeHtml(customerName)}님의 필름 현상 작업을 시작했습니다.</p><p style="margin:0 0 16px">완료되면 다시 안내 드리겠습니다.</p>`,
     },
     DONE: {
       subject: `[${SHOP_NAME}] 현상 완료 - ${uniqueCode}`,
-      body: `<p style="margin:0 0 12px">${customerName}님의 현상이 완료되었습니다.</p><p style="margin:0 0 16px">선택하신 수령 방법에 따라 발송 또는 방문 준비가 완료되었습니다.</p>`,
+      body: `<p style="margin:0 0 12px">${escapeHtml(customerName)}님의 현상이 완료되었습니다.</p><p style="margin:0 0 16px">선택하신 수령 방법에 따라 발송 또는 방문 준비가 완료되었습니다.</p>`,
     },
     CANCELLED: {
       subject: `[${SHOP_NAME}] 접수 취소 - ${uniqueCode}`,
-      body: `<p style="margin:0 0 12px">${customerName}님의 접수(${uniqueCode})가 취소되었습니다.</p><p style="margin:0 0 16px">문의사항이 있으시면 연락 주세요.</p>`,
+      body: `<p style="margin:0 0 12px">${escapeHtml(customerName)}님의 접수(${escapeHtml(uniqueCode)})가 취소되었습니다.</p><p style="margin:0 0 16px">문의사항이 있으시면 연락 주세요.</p>`,
     },
     EXPIRED: {
       subject: `[${SHOP_NAME}] 접수 만료 안내 - ${uniqueCode}`,
-      body: `<p style="margin:0 0 12px">${customerName}님의 접수(${uniqueCode})가 만료되었습니다.</p><p style="margin:0 0 16px">접수 후 일정 기간 내 필름이 도착하지 않아 자동으로 만료 처리되었습니다. 재접수를 원하시면 다시 신청해주세요.</p>`,
+      body: `<p style="margin:0 0 12px">${escapeHtml(customerName)}님의 접수(${escapeHtml(uniqueCode)})가 만료되었습니다.</p><p style="margin:0 0 16px">접수 후 일정 기간 내 필름이 도착하지 않아 자동으로 만료 처리되었습니다. 재접수를 원하시면 다시 신청해주세요.</p>`,
     },
   };
 
@@ -96,7 +105,7 @@ export async function sendStatusNotification(
     html: emailWrapper(`
       ${msg.body}
       <a href="${trackingUrl}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600">접수 상세 보기</a>
-      <p style="margin:16px 0 0;color:#64748b;font-size:13px">고유코드: <strong style="font-family:monospace">${uniqueCode}</strong></p>
+      <p style="margin:16px 0 0;color:#64748b;font-size:13px">고유코드: <strong style="font-family:monospace">${escapeHtml(uniqueCode)}</strong></p>
     `),
   });
 }
@@ -117,9 +126,9 @@ export async function sendNewOrderNotification(
     html: emailWrapper(`
       <p style="margin:0 0 16px;font-weight:600">새 현상 의뢰가 접수되었습니다.</p>
       <table style="border-collapse:collapse;width:100%;margin-bottom:20px">
-        <tr><td style="padding:6px 12px 6px 0;color:#64748b;font-size:13px;white-space:nowrap">고유코드</td><td style="padding:6px 0;font-weight:700;font-family:monospace">${order.uniqueCode}</td></tr>
-        <tr><td style="padding:6px 12px 6px 0;color:#64748b;font-size:13px;white-space:nowrap">고객명</td><td style="padding:6px 0">${order.customerName}</td></tr>
-        <tr><td style="padding:6px 12px 6px 0;color:#64748b;font-size:13px;white-space:nowrap">연락처</td><td style="padding:6px 0">${order.phone}</td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#64748b;font-size:13px;white-space:nowrap">고유코드</td><td style="padding:6px 0;font-weight:700;font-family:monospace">${escapeHtml(order.uniqueCode)}</td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#64748b;font-size:13px;white-space:nowrap">고객명</td><td style="padding:6px 0">${escapeHtml(order.customerName)}</td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#64748b;font-size:13px;white-space:nowrap">연락처</td><td style="padding:6px 0">${escapeHtml(order.phone)}</td></tr>
       </table>
       <a href="${detailUrl}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600">접수 상세 보기</a>
     `),
@@ -136,10 +145,10 @@ export async function sendOrderConfirmation(email: string, customerName: string,
     to: email,
     subject: `[${SHOP_NAME}] 접수 완료 - ${uniqueCode}`,
     html: emailWrapper(`
-      <p style="margin:0 0 12px">${customerName}님, 접수가 완료되었습니다.</p>
-      <p style="margin:0 0 8px">고유코드: <strong style="font-family:monospace;font-size:18px;letter-spacing:2px">${uniqueCode}</strong></p>
+      <p style="margin:0 0 12px">${escapeHtml(customerName)}님, 접수가 완료되었습니다.</p>
+      <p style="margin:0 0 8px">고유코드: <strong style="font-family:monospace;font-size:18px;letter-spacing:2px">${escapeHtml(uniqueCode)}</strong></p>
       <p style="margin:0 0 16px;color:#64748b;font-size:13px">택배 발송 시 박스에 고유코드와 연락처를 기재해주세요.</p>
-      ${process.env.EMAIL_FROM ? `<p style="margin:0;color:#64748b;font-size:12px">문의: ${process.env.EMAIL_FROM}</p>` : ""}
+      ${process.env.EMAIL_FROM ? `<p style="margin:0;color:#64748b;font-size:12px">문의: ${escapeHtml(process.env.EMAIL_FROM)}</p>` : ""}
     `),
   });
 }

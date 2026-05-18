@@ -11,6 +11,9 @@ export async function POST(req: NextRequest) {
   if (typeof currentPin !== "string" || typeof newPin !== "string") {
     return NextResponse.json({ error: "입력값 오류" }, { status: 400 });
   }
+  if (!/^\d{6}$/.test(currentPin)) {
+    return NextResponse.json({ error: "현재 PIN이 올바르지 않습니다" }, { status: 401 });
+  }
   if (!/^\d{6}$/.test(newPin)) {
     return NextResponse.json({ error: "새 PIN은 숫자 6자리여야 합니다" }, { status: 400 });
   }

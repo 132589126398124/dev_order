@@ -25,13 +25,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "올바른 이메일을 입력해주세요" }, { status: 400 });
   }
 
-  const existingUsername = await prisma.user.findUnique({ where: { username } });
-  if (existingUsername) {
+  const existing = await prisma.user.findFirst({
+    where: { OR: [{ username }, { email }] },
+    select: { username: true, email: true },
+  });
+  if (existing?.username === username) {
     return NextResponse.json({ error: "이미 사용 중인 아이디입니다" }, { status: 409 });
   }
-
-  const existingEmail = await prisma.user.findUnique({ where: { email } });
-  if (existingEmail) {
+  if (existing?.email === email) {
     return NextResponse.json({ error: "이미 사용 중인 이메일입니다" }, { status: 409 });
   }
 

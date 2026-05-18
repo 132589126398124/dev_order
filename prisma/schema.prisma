@@ -46,6 +46,8 @@ model Order {
   @@index([status])
   @@index([createdAt])
   @@index([userId])
+  @@index([customerName])
+  @@index([phone])
 }
 
 model ShopSettings {

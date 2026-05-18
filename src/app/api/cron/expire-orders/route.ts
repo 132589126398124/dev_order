@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   }
 
   await prisma.order.updateMany({
-    where: { id: { in: toExpire.map((o) => o.id) } },
+    where: { id: { in: toExpire.map((o) => o.id) }, status: "PENDING" },
     data: { status: "EXPIRED" },
   });
 

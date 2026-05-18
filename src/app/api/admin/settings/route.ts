@@ -15,6 +15,18 @@ export async function PATCH(req: Request) {
   if (!session?.isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
+
+  if (body.adminEmail !== undefined && body.adminEmail) {
+    if (typeof body.adminEmail !== "string" || body.adminEmail.length > 200 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.adminEmail)) {
+      return NextResponse.json({ error: "올바른 이메일을 입력해주세요" }, { status: 400 });
+    }
+  }
+  if (body.orderNotice !== undefined && body.orderNotice) {
+    if (typeof body.orderNotice !== "string" || body.orderNotice.length > 500) {
+      return NextResponse.json({ error: "공지사항은 500자 이하로 입력해주세요" }, { status: 400 });
+    }
+  }
+
   const data: Record<string, unknown> = {};
 
   if (typeof body.acceptPushPull === "boolean") data.acceptPushPull = body.acceptPushPull;

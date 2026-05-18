@@ -14,19 +14,23 @@ export async function POST(req: NextRequest) {
   if (!Array.isArray(ids) || ids.length === 0) {
     return NextResponse.json({ error: "선택된 항목이 없습니다" }, { status: 400 });
   }
+  if (ids.length > 200) {
+    return NextResponse.json({ error: "한 번에 최대 200건까지 처리 가능합니다" }, { status: 400 });
+  }
   if (!Object.values(OrderStatus).includes(status)) {
     return NextResponse.json({ error: "올바르지 않은 상태값" }, { status: 400 });
   }
 
-  // For DONE status with individual scan URLs, update each order separately
+  // For DONE status with individual scan URLs, update each order in a transaction
   if (status === "DONE" && scanFileUrls && typeof scanFileUrls === "object") {
-    const updates = ids.map((id: string) =>
-      prisma.order.update({
-        where: { id },
-        data: { status, scanFileUrl: (scanFileUrls[id] as string) || null },
-      })
+    await prisma.$transaction(
+      ids.map((id: string) =>
+        prisma.order.update({
+          where: { id },
+          data: { status, scanFileUrl: (scanFileUrls[id] as string) || null },
+        })
+      )
     );
-    await Promise.all(updates);
   } else {
     const data: Record<string, unknown> = { status };
     if (status === "DONE" && scanFileUrl !== undefined) {
@@ -49,7 +53,7 @@ export async function POST(req: NextRequest) {
     ...updatedOrders
       .filter((o) => o.sheetsRowIndex != null)
       .map((o) =>
-        updateOrderStatusInSheet(o.sheetsRowIndex!, status).catch((e) =>
+        updateOrderStatusInSheet(o.sheetsRowIndex ?? -1, status).catch((e) =>
           console.error("Batch sheets:", e)
         )
       ),
