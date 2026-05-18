@@ -8,10 +8,13 @@ interface Props {
   currentStatus: string;
 }
 
+const DESTRUCTIVE = new Set<string>(["CANCELLED", "EXPIRED"]);
+
 export default function AdminStatusSelect({ orderId, currentStatus }: Props) {
   const [status, setStatus] = useState(currentStatus);
   const [loading, setLoading] = useState(false);
   const [pendingDone, setPendingDone] = useState(false);
+  const [pendingDestructive, setPendingDestructive] = useState<string | null>(null);
   const [scanUrl, setScanUrl] = useState("");
   const [submitError, setSubmitError] = useState("");
 
@@ -39,18 +42,18 @@ export default function AdminStatusSelect({ orderId, currentStatus }: Props) {
     }
   };
 
-  const DESTRUCTIVE = new Set(["CANCELLED", "EXPIRED"]);
-
   const handleChange = (newStatus: string) => {
+    if (newStatus === status) return;
     if (newStatus === "DONE") {
+      setPendingDestructive(null);
       setPendingDone(true);
       setScanUrl("");
-    } else {
-      if (DESTRUCTIVE.has(newStatus)) {
-        const label = (ORDER_STATUS_LABELS as Record<string, string>)[newStatus] ?? newStatus;
-        if (!window.confirm(`[${label}] 처리합니다. 계속하시겠습니까?`)) return;
-      }
+    } else if (DESTRUCTIVE.has(newStatus)) {
       setPendingDone(false);
+      setPendingDestructive(newStatus);
+    } else {
+      setPendingDone(false);
+      setPendingDestructive(null);
       submitStatus(newStatus);
     }
   };
@@ -60,22 +63,29 @@ export default function AdminStatusSelect({ orderId, currentStatus }: Props) {
     submitStatus("DONE", scanUrl);
   };
 
-  const cancelDone = () => {
+  const confirmDestructive = () => {
+    if (!pendingDestructive) return;
+    const target = pendingDestructive;
+    setPendingDestructive(null);
+    submitStatus(target);
+  };
+
+  const cancel = () => {
     setPendingDone(false);
+    setPendingDestructive(null);
     setScanUrl("");
   };
 
-  const colorCls = (ORDER_STATUS_COLORS[status] ?? "").replace(/ring-\S+/g, "").trim();
+  const displayStatus = pendingDone ? "DONE" : pendingDestructive ?? status;
+  const colorCls = (ORDER_STATUS_COLORS[displayStatus] ?? "").replace(/ring-\S+/g, "").trim();
 
   return (
     <div className="flex flex-col gap-1.5">
       <select
-        value={pendingDone ? "DONE" : status}
+        value={displayStatus}
         onChange={(e) => handleChange(e.target.value)}
         disabled={loading}
-        className={`text-xs font-medium px-2 py-1 rounded-full border border-transparent cursor-pointer disabled:opacity-50 ${
-          pendingDone ? "bg-emerald-50 text-emerald-700" : colorCls
-        }`}
+        className={`text-xs font-medium px-2 py-1 rounded-full border border-transparent cursor-pointer disabled:opacity-50 ${colorCls}`}
       >
         {Object.entries(ORDER_STATUS_LABELS).map(([val, label]) => (
           <option key={val} value={val}>{label}</option>
@@ -83,6 +93,7 @@ export default function AdminStatusSelect({ orderId, currentStatus }: Props) {
       </select>
 
       {submitError && <p className="text-[10px] text-red-500 mt-0.5">{submitError}</p>}
+
       {pendingDone && (
         <div className="flex flex-col gap-1 min-w-[180px]">
           <input
@@ -100,10 +111,27 @@ export default function AdminStatusSelect({ orderId, currentStatus }: Props) {
             >
               완료 처리
             </button>
+            <button onClick={cancel} className="text-xs text-slate-400 hover:text-slate-600 px-2">
+              취소
+            </button>
+          </div>
+        </div>
+      )}
+
+      {pendingDestructive && (
+        <div className="flex flex-col gap-1 min-w-[140px]">
+          <p className="text-[10px] text-red-500 font-medium">
+            {ORDER_STATUS_LABELS[pendingDestructive] ?? pendingDestructive} 처리하시겠습니까?
+          </p>
+          <div className="flex gap-1">
             <button
-              onClick={cancelDone}
-              className="text-xs text-slate-400 hover:text-slate-600 px-2"
+              onClick={confirmDestructive}
+              disabled={loading}
+              className="flex-1 text-xs bg-red-500 text-white rounded-lg py-1 hover:bg-red-600 disabled:opacity-50 transition-colors font-medium"
             >
+              확인
+            </button>
+            <button onClick={cancel} className="text-xs text-slate-400 hover:text-slate-600 px-2">
               취소
             </button>
           </div>

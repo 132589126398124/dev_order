@@ -4,12 +4,12 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 export function timingSafeStringEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) {
-    timingSafeEqual(bufA, bufA);
-    return false;
-  }
+  // Pad both buffers to the same length to prevent length-based timing oracle.
+  const len = Math.max(a.length, b.length, 1);
+  const bufA = Buffer.alloc(len);
+  const bufB = Buffer.alloc(len);
+  bufA.write(a);
+  bufB.write(b);
   return timingSafeEqual(bufA, bufB);
 }
 

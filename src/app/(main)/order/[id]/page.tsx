@@ -102,7 +102,7 @@ export default async function OrderDetailPage({ params }: Props) {
             <p className="text-sm text-emerald-800">현상 및 스캔이 완료되었습니다</p>
           </div>
           <a
-            href={order.scanFileUrl!}
+            href={order.scanFileUrl ?? ""}
             target="_blank"
             rel="noopener noreferrer"
             className="shrink-0 bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-emerald-700 transition-colors"

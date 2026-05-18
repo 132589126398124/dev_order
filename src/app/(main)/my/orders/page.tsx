@@ -38,8 +38,12 @@ export default async function MyOrdersPage() {
 
       {orders.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
-          <p className="text-slate-400 mb-3">접수 내역이 없습니다</p>
-          <Link href="/order/new" className="text-sm text-slate-900 font-medium underline underline-offset-2">첫 접수 하러가기</Link>
+          <p className="text-2xl mb-3">📷</p>
+          <p className="text-slate-500 font-medium mb-1">아직 접수 내역이 없어요</p>
+          <p className="text-slate-400 text-sm mb-5">필름을 보내주시면 여기서 확인할 수 있습니다</p>
+          <Link href="/order/new" className="inline-block bg-slate-900 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-slate-800 transition-colors">
+            첫 접수 시작하기 →
+          </Link>
         </div>
       ) : (
         <div className="space-y-3">

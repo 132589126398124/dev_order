@@ -11,15 +11,14 @@ const ALL_SCAN_TYPES = ["없음", "JPG", "TIFF", "JPG+TIFF"] as const;
 
 export default function ShopSettingsForm({ initialSettings }: { initialSettings: ShopSettings }) {
   const [s, setStateS] = useState(initialSettings);
+  const [isDirty, setIsDirty] = useState(false);
   const setS: typeof setStateS = useCallback((v) => {
     setStateS(v);
     setIsDirty(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setStateS, setIsDirty]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [isDirty, setIsDirty] = useState(false);
 
   const [pinForm, setPinForm] = useState({ current: "", next: "", confirm: "" });
   const [pinSaving, setPinSaving] = useState(false);

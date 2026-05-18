@@ -40,13 +40,13 @@ export default async function CompletePage({ params }: Props) {
   return (
     <main className="max-w-lg mx-auto px-4 py-12">
       <div className="text-center mb-8">
-        <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+        <div className="w-16 h-16 bg-emerald-50 border-2 border-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5">
+          <svg className="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-slate-900">접수 완료</h1>
-        <p className="text-slate-500 text-sm mt-1">확인 이메일이 발송되었습니다</p>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">접수 완료!</h1>
+        <p className="text-slate-400 text-sm mt-1.5">확인 이메일이 발송되었습니다</p>
       </div>
 
       {/* 고유 코드 */}
@@ -93,25 +93,25 @@ export default async function CompletePage({ params }: Props) {
         )}
       </div>
 
-      {/* 필름 동봉 방법 */}
+      {/* 필름 발송 안내 */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 mb-4">
-        <p className="text-sm font-semibold text-slate-700 mb-3">필름 동봉 방법을 선택해주세요</p>
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">필름 발송 안내</p>
         <div className="grid grid-cols-2 gap-3">
           <Link
             href={`/order/${id}/print`}
             target="_blank"
-            className="border-2 border-slate-200 rounded-xl p-4 hover:border-slate-900 transition-colors text-center"
+            className="group border border-slate-200 rounded-xl p-4 hover:border-slate-400 hover:bg-slate-50 transition-all text-center"
           >
-            <div className="text-2xl mb-2">🖨️</div>
-            <p className="text-sm font-medium text-slate-900">의뢰서 출력</p>
-            <p className="text-xs text-slate-500 mt-1">출력 후 필름과 동봉</p>
+            <div className="text-xl mb-2 opacity-70 group-hover:opacity-100 transition-opacity">🖨️</div>
+            <p className="text-sm font-semibold text-slate-800">의뢰서 출력</p>
+            <p className="text-xs text-slate-400 mt-1">출력 후 필름과 동봉</p>
           </Link>
 
-          <div className="border-2 border-slate-200 rounded-xl p-4 text-center">
-            <div className="text-2xl mb-2">📦</div>
-            <p className="text-sm font-medium text-slate-900">고유 ID 사용</p>
-            <p className="text-xs text-slate-500 mt-1 font-semibold">박스 내부 또는 메모지에<br/>코드와 전화번호 기재</p>
-            <p className="font-mono text-xs font-bold mt-2 bg-slate-100 rounded-lg px-2 py-1.5 text-slate-900">{order.uniqueCode}</p>
+          <div className="border border-slate-200 rounded-xl p-4 text-center bg-slate-50/50">
+            <div className="text-xl mb-2 opacity-70">📦</div>
+            <p className="text-sm font-semibold text-slate-800">코드만 적기</p>
+            <p className="text-xs text-slate-400 mt-1">메모지에 코드 + 연락처</p>
+            <p className="font-mono text-[11px] font-bold mt-2 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-slate-700 tracking-widest">{order.uniqueCode}</p>
           </div>
         </div>
       </div>
