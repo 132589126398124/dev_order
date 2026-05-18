@@ -54,6 +54,36 @@ export const DEFAULT_RESOLUTION_CONFIG: ResolutionConfig = {
   ultra: { enabled: false, description: "" },
 };
 
+export function parseShopSettings(raw: {
+  acceptPushPull: boolean;
+  acceptHalfFrame: boolean;
+  disabledProcesses: string[];
+  disabledScanTypes: string[];
+  disabledResolutions: string[];
+  blockedFilms: string[];
+  filmNotices: unknown;
+  orderNotice: string | null;
+  pricing: unknown;
+  adminEmail: string | null;
+  resolutionConfig: unknown;
+  autoExpireDays: number;
+}): ShopSettings {
+  return {
+    acceptPushPull: raw.acceptPushPull,
+    acceptHalfFrame: raw.acceptHalfFrame,
+    disabledProcesses: raw.disabledProcesses,
+    disabledScanTypes: raw.disabledScanTypes,
+    disabledResolutions: raw.disabledResolutions,
+    blockedFilms: raw.blockedFilms,
+    filmNotices: (raw.filmNotices as Record<string, string>) ?? {},
+    orderNotice: raw.orderNotice,
+    pricing: (raw.pricing as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
+    adminEmail: raw.adminEmail,
+    resolutionConfig: (raw.resolutionConfig as ShopSettings["resolutionConfig"]) ?? DEFAULT_RESOLUTION_CONFIG,
+    autoExpireDays: raw.autoExpireDays ?? 7,
+  };
+}
+
 export const DEFAULT_SETTINGS: ShopSettings = {
   acceptPushPull: true,
   acceptHalfFrame: true,

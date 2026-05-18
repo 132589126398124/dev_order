@@ -29,6 +29,7 @@ export const orderSchema = z.object({
 
 export type FilmItem = z.infer<typeof filmItemSchema>;
 export type OrderFormData = z.infer<typeof orderSchema>;
+export type OrderFormDraft = Partial<OrderFormData> & { deliveryAddressDetail?: string };
 
 export const DEFAULT_FILM_ITEM: FilmItem = {
   filmType: "",

@@ -44,6 +44,7 @@ export default function AdminDateRangePicker({ dateFrom, dateTo }: Props) {
         value={dateFrom ?? ""}
         max={dateTo || today}
         onChange={(e) => update("dateFrom", e.target.value)}
+        aria-label="시작 날짜"
         className="text-xs bg-transparent focus:outline-none text-slate-700 w-[6.5rem] cursor-pointer"
       />
       <span className="text-xs text-slate-300 select-none">~</span>
@@ -53,6 +54,7 @@ export default function AdminDateRangePicker({ dateFrom, dateTo }: Props) {
         min={dateFrom}
         max={today}
         onChange={(e) => update("dateTo", e.target.value)}
+        aria-label="종료 날짜"
         className="text-xs bg-transparent focus:outline-none text-slate-700 w-[6.5rem] cursor-pointer"
       />
       {hasRange && (

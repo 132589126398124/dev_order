@@ -1,44 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { DEFAULT_SETTINGS, DEFAULT_PRICING, DEFAULT_RESOLUTION_CONFIG } from "@/types/settings";
-import type { ShopSettings } from "@/types/settings";
-
-function serialize(raw: {
-  acceptPushPull: boolean;
-  acceptHalfFrame: boolean;
-  disabledProcesses: string[];
-  disabledScanTypes: string[];
-  disabledResolutions: string[];
-  blockedFilms: string[];
-  filmNotices: unknown;
-  orderNotice: string | null;
-  pricing: unknown;
-  adminEmail: string | null;
-  resolutionConfig: unknown;
-  autoExpireDays: number;
-}): ShopSettings {
-  return {
-    acceptPushPull: raw.acceptPushPull,
-    acceptHalfFrame: raw.acceptHalfFrame,
-    disabledProcesses: raw.disabledProcesses,
-    disabledScanTypes: raw.disabledScanTypes,
-    disabledResolutions: raw.disabledResolutions,
-    blockedFilms: raw.blockedFilms,
-    filmNotices: (raw.filmNotices as Record<string, string>) ?? {},
-    orderNotice: raw.orderNotice,
-    pricing: (raw.pricing as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
-    adminEmail: raw.adminEmail,
-    resolutionConfig: (raw.resolutionConfig as ShopSettings["resolutionConfig"]) ?? DEFAULT_RESOLUTION_CONFIG,
-    autoExpireDays: raw.autoExpireDays ?? 7,
-  };
-}
+import { DEFAULT_SETTINGS, parseShopSettings } from "@/types/settings";
 
 export async function GET() {
   const session = await getSession();
   if (!session?.isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const raw = await prisma.shopSettings.findUnique({ where: { id: "singleton" } });
-  return NextResponse.json(raw ? serialize(raw) : DEFAULT_SETTINGS);
+  return NextResponse.json(raw ? parseShopSettings(raw) : DEFAULT_SETTINGS);
 }
 
 export async function PATCH(req: Request) {
@@ -66,5 +35,5 @@ export async function PATCH(req: Request) {
     create: { id: "singleton", ...data },
     update: data,
   });
-  return NextResponse.json(serialize(raw));
+  return NextResponse.json(parseShopSettings(raw));
 }

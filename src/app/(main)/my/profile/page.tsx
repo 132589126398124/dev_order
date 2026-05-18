@@ -8,7 +8,7 @@ export const metadata = { title: "내 프로필" };
 
 export default async function MyProfilePage() {
   const session = await getSession();
-  if (!session || session.isAdmin) redirect("/login");
+  if (!session || session.isAdmin) redirect("/login?next=/my/profile");
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },

@@ -19,16 +19,17 @@ export default function AdminSearch() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="flex gap-2 mb-4">
+    <form onSubmit={onSubmit} className="flex gap-2">
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="고유코드, 고객명, 연락처 검색"
-        className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+        aria-label="주문 검색"
+        className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-slate-400 transition-colors"
       />
-      <button type="submit" className="bg-black text-white px-4 py-2 rounded-lg text-sm">검색</button>
+      <button type="submit" className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors">검색</button>
       {value && (
-        <button type="button" onClick={() => { setValue(""); router.push("/admin/orders"); }} className="text-sm text-gray-500 hover:text-gray-800">
+        <button type="button" onClick={() => { setValue(""); router.push("/admin/orders"); }} className="text-sm text-slate-500 hover:text-slate-800 transition-colors">
           초기화
         </button>
       )}

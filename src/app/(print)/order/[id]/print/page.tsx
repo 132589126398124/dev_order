@@ -24,10 +24,9 @@ export default async function PrintPage({ params }: Props) {
   ]);
   if (!order) notFound();
 
-  // Allow: admin, order owner (logged in), or non-member (no session, order has no userId)
-  if (session && !session.isAdmin && order.userId !== session.userId) {
-    redirect("/login");
-  }
+  const isOwner = session && (session.isAdmin || order.userId === session.userId);
+  const isNonMemberOrder = !order.userId;
+  if (!isOwner && !isNonMemberOrder) redirect("/login");
 
   const filmItems = (order.filmItems ?? []) as FilmItem[];
   const createdAt = format(order.createdAt, "yyyy년 MM월 dd일 HH:mm", { locale: ko });

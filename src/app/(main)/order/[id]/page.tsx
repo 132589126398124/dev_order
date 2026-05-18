@@ -26,7 +26,9 @@ export default async function OrderDetailPage({ params }: Props) {
   const order = await prisma.order.findUnique({ where: { id } });
   if (!order) notFound();
 
-  if (!session?.isAdmin && order.userId !== session?.userId) redirect("/login");
+  const isOwner = session && (session.isAdmin || order.userId === session.userId);
+  const isNonMemberOrder = !order.userId;
+  if (!isOwner && !isNonMemberOrder) redirect("/login");
 
   const filmItems = (order.filmItems ?? []) as FilmItem[];
   const canEdit = ["PENDING", "SHIPPED"].includes(order.status) && !session?.isAdmin;

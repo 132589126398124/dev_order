@@ -4,13 +4,14 @@ import { useState, useRef, useEffect } from "react";
 import { searchFilms, FilmEntry } from "@/data/films";
 
 interface Props {
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   onSelect: (film: FilmEntry) => void;
   error?: boolean;
 }
 
-export default function FilmSearch({ value, onChange, onSelect, error }: Props) {
+export default function FilmSearch({ id, value, onChange, onSelect, error }: Props) {
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -56,6 +57,7 @@ export default function FilmSearch({ value, onChange, onSelect, error }: Props) 
     <div ref={containerRef} className="relative">
       <input
         ref={inputRef}
+        id={id}
         value={value}
         onChange={(e) => { onChange(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import OrderForm from "@/components/order/OrderForm";
 import type { FilmItem } from "@/types/order";
-import { DEFAULT_SETTINGS, DEFAULT_PRICING, DEFAULT_RESOLUTION_CONFIG } from "@/types/settings";
+import { DEFAULT_SETTINGS, parseShopSettings } from "@/types/settings";
 import type { ShopSettings } from "@/types/settings";
 
 export const metadata = { title: "접수 수정" };
@@ -19,22 +19,7 @@ export default async function EditOrderPage({ params }: Props) {
     prisma.shopSettings.findUnique({ where: { id: "singleton" } }),
   ]);
 
-  const settings: ShopSettings = rawSettings
-    ? {
-        acceptPushPull: rawSettings.acceptPushPull,
-        acceptHalfFrame: rawSettings.acceptHalfFrame,
-        disabledProcesses: rawSettings.disabledProcesses,
-        disabledScanTypes: rawSettings.disabledScanTypes,
-        disabledResolutions: rawSettings.disabledResolutions,
-        blockedFilms: rawSettings.blockedFilms,
-        filmNotices: (rawSettings.filmNotices as Record<string, string>) ?? {},
-        orderNotice: rawSettings.orderNotice,
-        pricing: (rawSettings.pricing as unknown as ShopSettings["pricing"]) ?? DEFAULT_PRICING,
-        adminEmail: rawSettings.adminEmail ?? null,
-        resolutionConfig: (rawSettings.resolutionConfig as unknown as ShopSettings["resolutionConfig"]) ?? DEFAULT_RESOLUTION_CONFIG,
-        autoExpireDays: rawSettings.autoExpireDays ?? 7,
-      }
-    : DEFAULT_SETTINGS;
+  const settings: ShopSettings = rawSettings ? parseShopSettings(rawSettings) : DEFAULT_SETTINGS;
 
   // 로그인한 회원이 본인 주문이면 토큰 만료 무시
   const isOwner = session && !session.isAdmin && order?.userId === session.userId;
@@ -76,6 +61,7 @@ export default async function EditOrderPage({ params }: Props) {
       </div>
       <OrderForm
         editToken={token}
+        orderId={order.id}
         userId={session?.userId}
         settings={settings}
         defaultValues={{

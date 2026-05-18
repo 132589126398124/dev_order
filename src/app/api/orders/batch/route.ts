@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { OrderStatus } from "@prisma/client";
 import { sendStatusNotification } from "@/lib/email";
+import { updateOrderStatusInSheet } from "@/lib/sheets";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -36,16 +37,23 @@ export async function POST(req: NextRequest) {
 
   const updatedOrders = await prisma.order.findMany({
     where: { id: { in: ids } },
-    select: { id: true, email: true, customerName: true, uniqueCode: true },
+    select: { id: true, email: true, customerName: true, uniqueCode: true, sheetsRowIndex: true },
   });
 
-  await Promise.allSettled(
-    updatedOrders.map((o) =>
+  await Promise.allSettled([
+    ...updatedOrders.map((o) =>
       sendStatusNotification(o.email, o.customerName, o.uniqueCode, o.id, status).catch((e) =>
         console.error("Batch email:", e)
       )
-    )
-  );
+    ),
+    ...updatedOrders
+      .filter((o) => o.sheetsRowIndex != null)
+      .map((o) =>
+        updateOrderStatusInSheet(o.sheetsRowIndex!, status).catch((e) =>
+          console.error("Batch sheets:", e)
+        )
+      ),
+  ]);
 
   return NextResponse.json({ ok: true, count: ids.length });
 }

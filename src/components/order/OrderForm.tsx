@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Script from "next/script";
-import { orderSchema, OrderFormData, FilmItem, DEFAULT_FILM_ITEM } from "@/types/order";
+import { orderSchema, OrderFormData, OrderFormDraft, FilmItem, DEFAULT_FILM_ITEM } from "@/types/order";
 import FilmSearch from "./FilmSearch";
 import type { FilmEntry } from "@/data/films";
 import type { ShopSettings } from "@/types/settings";
@@ -37,6 +37,7 @@ const PROCESS_DESC: Record<string, string> = {
 interface Props {
   defaultValues?: Partial<OrderFormData>;
   editToken?: string;
+  orderId?: string;
   userId?: string;
   settings?: ShopSettings;
 }
@@ -137,8 +138,9 @@ function FilmItemRow({
       </div>
 
       <div>
-        <label className={labelCls}>필름 종류 *</label>
+        <label htmlFor={`filmType-${index}`} className={labelCls}>필름 종류 *</label>
         <FilmSearch
+          id={`filmType-${index}`}
           value={item.filmType}
           onChange={(v) => onChange(index, "filmType", v)}
           onSelect={handleFilmSelect}
@@ -155,8 +157,9 @@ function FilmItemRow({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelCls}>포맷 *</label>
+          <label htmlFor={`format-${index}`} className={labelCls}>포맷 *</label>
           <select
+            id={`format-${index}`}
             value={item.format}
             onChange={(e) => onChange(index, "format", e.target.value)}
             className={selectCls}
@@ -192,8 +195,9 @@ function FilmItemRow({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelCls}>현상 프로세스 *</label>
+          <label htmlFor={`process-${index}`} className={labelCls}>현상 프로세스 *</label>
           <select
+            id={`process-${index}`}
             value={item.process}
             onChange={(e) => onChange(index, "process", e.target.value)}
             className={selectCls}
@@ -207,8 +211,9 @@ function FilmItemRow({
           <p className="text-xs text-slate-400 mt-1">{PROCESS_DESC[item.process]}</p>
         </div>
         <div>
-          <label className={labelCls}>스캔 타입 *</label>
+          <label htmlFor={`scanType-${index}`} className={labelCls}>스캔 타입 *</label>
           <select
+            id={`scanType-${index}`}
             value={item.scanType}
             onChange={(e) => onChange(index, "scanType", e.target.value)}
             className={selectCls}
@@ -256,8 +261,9 @@ function FilmItemRow({
       <div className={`grid gap-3 ${settings.acceptPushPull ? "grid-cols-2" : "grid-cols-1"}`}>
         {settings.acceptPushPull && (
           <div>
-            <label className={labelCls}>증감</label>
+            <label htmlFor={`pushPull-${index}`} className={labelCls}>증감</label>
             <select
+              id={`pushPull-${index}`}
               value={item.pushPull}
               onChange={(e) => onChange(index, "pushPull", e.target.value)}
               className={selectCls}
@@ -273,8 +279,9 @@ function FilmItemRow({
           </div>
         )}
         <div>
-          <label className={labelCls}>EI (감도)</label>
+          <label htmlFor={`ei-${index}`} className={labelCls}>EI (감도)</label>
           <input
+            id={`ei-${index}`}
             value={item.ei ?? ""}
             onChange={(e) => onChange(index, "ei", e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
             inputMode="numeric"
@@ -300,7 +307,7 @@ function FilmItemRow({
   );
 }
 
-export default function OrderForm({ defaultValues, editToken, userId, settings = DEFAULT_SETTINGS }: Props) {
+export default function OrderForm({ defaultValues, editToken, orderId, userId, settings = DEFAULT_SETTINGS }: Props) {
   const router = useRouter();
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   const formRef = useRef<HTMLFormElement>(null);
@@ -321,7 +328,7 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [editSuccess, setEditSuccess] = useState(false);
-  const [draftBanner, setDraftBanner] = useState<Partial<OrderFormData> | null>(null);
+  const [draftBanner, setDraftBanner] = useState<OrderFormDraft | null>(null);
   const errorBannerRef = useRef<HTMLDivElement>(null);
 
   // Saved profile state
@@ -367,7 +374,7 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (raw) {
-        const draft = JSON.parse(raw) as Partial<OrderFormData>;
+        const draft = JSON.parse(raw) as OrderFormDraft;
         if (draft.customerName || draft.phone || (draft.filmItems?.length ?? 0) > 1 || draft.filmItems?.[0]?.filmType) {
           setDraftBanner(draft);
           return;
@@ -405,8 +412,7 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
     if (draftBanner.filmItems?.length) setFilmItems(draftBanner.filmItems);
     if (draftBanner.pickupMethod) setPickupMethod(draftBanner.pickupMethod as "택배" | "방문" | "폐기");
     if (draftBanner.deliveryAddress) setDeliveryAddress(draftBanner.deliveryAddress);
-    const draftWithDetail = draftBanner as Partial<OrderFormData> & { deliveryAddressDetail?: string };
-    if (draftWithDetail.deliveryAddressDetail) setDeliveryAddressDetail(draftWithDetail.deliveryAddressDetail);
+    if (draftBanner.deliveryAddressDetail) setDeliveryAddressDetail(draftBanner.deliveryAddressDetail);
     if (draftBanner.notes) setNotes(draftBanner.notes);
     setDraftBanner(null);
     draftSaveRef.current = true;
@@ -606,9 +612,16 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
         </div>
         <h2 className="text-lg font-bold text-slate-900 mb-2">수정 완료</h2>
         <p className="text-sm text-slate-500 mb-6">접수 내역이 성공적으로 수정되었습니다.</p>
-        <Link href="/" className="inline-block bg-slate-900 text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-slate-800 transition-colors">
-          홈으로 돌아가기
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          {orderId && (
+            <Link href={`/order/${orderId}`} className="inline-block bg-slate-900 text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-slate-800 transition-colors">
+              접수 내역 확인
+            </Link>
+          )}
+          <Link href="/" className="inline-block bg-white border border-slate-200 text-slate-700 text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-slate-50 transition-colors">
+            홈으로 돌아가기
+          </Link>
+        </div>
       </div>
     );
   }
@@ -682,8 +695,9 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>고객명 *</label>
+              <label htmlFor="customerName" className={labelCls}>고객명 *</label>
               <input
+                id="customerName"
                 value={customerName}
                 onChange={(e) => { setCustomerName(e.target.value); clearError("customerName"); }}
                 onBlur={(e) => blurValidate("customerName", e.target.value)}
@@ -693,8 +707,9 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
               {errors.customerName && <p className="text-xs text-red-500 mt-1">{errors.customerName}</p>}
             </div>
             <div>
-              <label className={labelCls}>연락처 *</label>
+              <label htmlFor="phone" className={labelCls}>연락처 *</label>
               <input
+                id="phone"
                 value={phone}
                 onChange={(e) => { setPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 11)); clearError("phone"); }}
                 onBlur={(e) => blurValidate("phone", e.target.value)}
@@ -706,8 +721,9 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
             </div>
           </div>
           <div>
-            <label className={labelCls}>이메일 *</label>
+            <label htmlFor="email" className={labelCls}>이메일 *</label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => { setEmail(e.target.value); clearError("email"); }}
@@ -773,9 +789,10 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
 
           {pickupMethod === "택배" && (
             <div>
-              <label className={labelCls}>반송 주소 *</label>
+              <label htmlFor="deliveryAddress" className={labelCls}>반송 주소 *</label>
               <div className="flex gap-2 mb-2">
                 <input
+                  id="deliveryAddress"
                   value={deliveryAddress}
                   readOnly
                   onClick={openPostcode}
@@ -803,8 +820,8 @@ export default function OrderForm({ defaultValues, editToken, userId, settings =
           )}
 
           <div>
-            <label className={labelCls}>요청사항</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputCls} placeholder="특이사항, 현상 요청사항 등" />
+            <label htmlFor="notes" className={labelCls}>요청사항</label>
+            <textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputCls} placeholder="특이사항, 현상 요청사항 등" />
           </div>
         </section>
 

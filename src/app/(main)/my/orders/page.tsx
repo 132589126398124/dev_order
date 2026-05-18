@@ -11,7 +11,7 @@ export const metadata = { title: "내 접수 내역" };
 
 export default async function MyOrdersPage() {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect("/login?next=/my/orders");
 
   const orders = await prisma.order.findMany({
     where: { userId: session.userId },

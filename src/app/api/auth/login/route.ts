@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
-import { verifyPin, createSession } from "@/lib/auth";
+import { verifyPin, createSession, timingSafeStringEqual } from "@/lib/auth";
 import { checkLoginRateLimit } from "@/lib/rate-limit";
-
-function timingSafeStringEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) {
-    // Still compare to avoid timing leak on length
-    timingSafeEqual(bufA, bufA);
-    return false;
-  }
-  return timingSafeEqual(bufA, bufB);
-}
 
 
 export async function POST(req: NextRequest) {

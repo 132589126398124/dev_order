@@ -50,8 +50,9 @@ export default function ProfileForm({ initialProfile }: { initialProfile: Profil
     <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className={labelCls}>이름</label>
+          <label htmlFor="profileName" className={labelCls}>이름</label>
           <input
+            id="profileName"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className={inputCls}
@@ -59,8 +60,9 @@ export default function ProfileForm({ initialProfile }: { initialProfile: Profil
           />
         </div>
         <div>
-          <label className={labelCls}>연락처</label>
+          <label htmlFor="profilePhone" className={labelCls}>연락처</label>
           <input
+            id="profilePhone"
             value={phone}
             onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 11))}
             inputMode="tel"
@@ -70,8 +72,9 @@ export default function ProfileForm({ initialProfile }: { initialProfile: Profil
         </div>
       </div>
       <div>
-        <label className={labelCls}>이메일</label>
+        <label htmlFor="profileEmail" className={labelCls}>이메일</label>
         <input
+          id="profileEmail"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -80,8 +83,9 @@ export default function ProfileForm({ initialProfile }: { initialProfile: Profil
         />
       </div>
       <div>
-        <label className={labelCls}>기본 주소</label>
+        <label htmlFor="profileAddress" className={labelCls}>기본 주소</label>
         <input
+          id="profileAddress"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           className={inputCls}

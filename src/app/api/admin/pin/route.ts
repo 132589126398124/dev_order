@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
-import { getSession, hashPin, verifyPin } from "@/lib/auth";
-
-function timingSafeStringEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) {
-    timingSafeEqual(bufA, bufA);
-    return false;
-  }
-  return timingSafeEqual(bufA, bufB);
-}
+import { getSession, hashPin, verifyPin, timingSafeStringEqual } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();

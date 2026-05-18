@@ -51,7 +51,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
   })();
 
   const where = {
-    ...(status ? { status: status as any } : {}),
+    ...(status && Object.values(OrderStatus).includes(status as OrderStatus) ? { status: status as OrderStatus } : {}),
     ...(dateFilter ? { createdAt: dateFilter } : {}),
     ...(search ? {
       OR: [

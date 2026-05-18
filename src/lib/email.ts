@@ -139,7 +139,7 @@ export async function sendOrderConfirmation(email: string, customerName: string,
       <p style="margin:0 0 12px">${customerName}님, 접수가 완료되었습니다.</p>
       <p style="margin:0 0 8px">고유코드: <strong style="font-family:monospace;font-size:18px;letter-spacing:2px">${uniqueCode}</strong></p>
       <p style="margin:0 0 16px;color:#64748b;font-size:13px">택배 발송 시 박스에 고유코드와 연락처를 기재해주세요.</p>
-      <p style="margin:0;color:#64748b;font-size:12px">문의: ${process.env.EMAIL_FROM}</p>
+      ${process.env.EMAIL_FROM ? `<p style="margin:0;color:#64748b;font-size:12px">문의: ${process.env.EMAIL_FROM}</p>` : ""}
     `),
   });
 }

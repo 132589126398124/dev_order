@@ -8,6 +8,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const justRegistered = searchParams.get("registered") === "1";
+  const nextUrl = searchParams.get("next");
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
@@ -25,7 +26,8 @@ function LoginForm() {
       });
       const json = await res.json();
       if (!res.ok) { setError(json.error ?? "로그인 실패"); return; }
-      router.push(json.isAdmin ? "/admin/orders" : "/my/orders");
+      const dest = json.isAdmin ? "/admin/orders" : (nextUrl && nextUrl.startsWith("/") ? nextUrl : "/my/orders");
+      router.push(dest);
       router.refresh();
     } catch {
       setError("서버 연결에 실패했습니다.");
