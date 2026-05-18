@@ -79,7 +79,7 @@ export async function sendStatusNotification(
     },
     DONE: {
       subject: `[${SHOP_NAME}] 현상 완료 - ${uniqueCode}`,
-      body: `<p style="margin:0 0 12px">${escapeHtml(customerName)}님의 현상이 완료되었습니다.</p><p style="margin:0 0 16px">선택하신 수령 방법에 따라 발송 또는 방문 준비가 완료되었습니다.</p>${scanFileUrl ? `<a href="${escapeHtml(scanFileUrl)}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:12px">파일 받기</a><br>` : ""}`,
+      body: `<p style="margin:0 0 12px">${escapeHtml(customerName)}님의 현상이 완료되었습니다.</p><p style="margin:0 0 16px">선택하신 수령 방법에 따라 발송 또는 방문 준비가 완료되었습니다.</p>${scanFileUrl ? `<a href="${scanFileUrl}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:12px">파일 받기</a><br>` : ""}`,
     },
     CANCELLED: {
       subject: `[${SHOP_NAME}] 접수 취소 - ${uniqueCode}`,
