@@ -41,3 +41,9 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# local docs (not for repo)
+AUDIT_REPORT.md
+CHANGELOG.md
+TODO.md
+NOTES.md
