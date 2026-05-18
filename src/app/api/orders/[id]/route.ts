@@ -54,11 +54,33 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       order.sheetsRowIndex
         ? updateOrderStatusInSheet(order.sheetsRowIndex, status).catch((e) => console.error("Sheets:", e))
         : Promise.resolve(),
-      sendStatusNotification(order.email, order.customerName, order.uniqueCode, order.id, status).catch((e) =>
+      sendStatusNotification(order.email, order.customerName, order.uniqueCode, order.id, status, order.scanFileUrl ?? undefined).catch((e) =>
         console.error("Email:", e)
       ),
     ]);
   }
+
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getSession();
+  if (!session?.userId) {
+    return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const order = await prisma.order.findUnique({ where: { id } });
+  if (!order) return NextResponse.json({ error: "접수 건을 찾을 수 없습니다" }, { status: 404 });
+  if (order.userId !== session.userId) return NextResponse.json({ error: "권한 없음" }, { status: 403 });
+  if (order.status !== "PENDING") {
+    return NextResponse.json({ error: "접수 대기 상태에서만 취소할 수 있습니다" }, { status: 400 });
+  }
+
+  await prisma.order.update({ where: { id }, data: { status: "CANCELLED" } });
+  sendStatusNotification(order.email, order.customerName, order.uniqueCode, order.id, "CANCELLED").catch((e) =>
+    console.error("Email:", e)
+  );
 
   return NextResponse.json({ ok: true });
 }

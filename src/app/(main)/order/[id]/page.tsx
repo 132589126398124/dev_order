@@ -8,6 +8,7 @@ import { ko } from "date-fns/locale";
 import Link from "next/link";
 import AdminStatusSelect from "@/components/admin/AdminStatusSelect";
 import AdminOrderMeta from "@/components/admin/AdminOrderMeta";
+import CancelOrderButton from "@/components/order/CancelOrderButton";
 
 const COURIER_URLS: Record<string, string> = {
   "CJ대한통운": "https://trace.cjlogistics.com/next/tracking.html?wblNo=",
@@ -32,6 +33,7 @@ export default async function OrderDetailPage({ params }: Props) {
 
   const filmItems = (order.filmItems ?? []) as FilmItem[];
   const canEdit = ["PENDING", "SHIPPED"].includes(order.status) && !session?.isAdmin;
+  const canCancel = order.status === "PENDING" && !session?.isAdmin && !!session?.userId && order.userId === session.userId;
   const showTracking = order.trackingNumber && ["SHIPPED", "PROCESSING", "DONE"].includes(order.status);
   const showScanFile = order.scanFileUrl && order.status === "DONE";
   const trackingUrl = order.courierName && order.trackingNumber
@@ -187,6 +189,11 @@ export default async function OrderDetailPage({ params }: Props) {
           </Link>
         )}
       </div>
+      {canCancel && (
+        <div className="flex gap-3 mt-3">
+          <CancelOrderButton orderId={order.id} />
+        </div>
+      )}
     </main>
   );
 }

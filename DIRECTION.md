@@ -93,11 +93,13 @@ Secondary CTA:  bg-white border-slate-200 text-slate-700  (hover: border-slate-3
 - 성공: 인라인 상태 변경 즉시 반영 또는 토스트 (짧게, 자동 소멸)
 - 실패: 액션 위치 근처에 에러 메시지 표시 (전용 에러 페이지 X)
 
-### 4-5. 모바일 패턴 (구현 예정)
+### 4-5. 모바일 패턴
+
+모바일 네비게이션은 **햄버거 메뉴 단일 패턴**으로 결정 (`NavbarMobileMenu.tsx`). 별도 바텀 네비게이션은 도입하지 않습니다.
 
 - 주요 액션은 엄지 닿는 영역(하단)에 배치
 - 복잡한 옵션은 바텀시트 (전체 페이지 이동 X)
-- 탭 메뉴는 하단 고정 (상단 Navbar는 PC용)
+- 상단 Navbar는 PC용, 모바일은 햄버거 드롭다운으로 동일 메뉴 제공
 
 ---
 
@@ -159,24 +161,27 @@ Secondary CTA:  bg-white border-slate-200 text-slate-700  (hover: border-slate-3
 
 ---
 
-## 7. 미완성 마일스톤
+## 7. 마일스톤
 
-### M1 · 운영 안정화 (우선순위 높음)
-- 모바일 햄버거 메뉴 / 바텀 네비게이션
-- PIN 분실 복구 (이메일 magic link 방식 권장)
-- 내 접수 내역 "더 보기" 또는 무한스크롤 (페이지 번호 X — 클릭 최소화)
-- 최소형 푸터 (연락처·인스타그램 링크 정도)
+### 최근 완료
+- **M1 · 운영 안정화** 모두 완료 (2026-05 기준)
+  - 모바일 햄버거 메뉴 (`src/components/NavbarMobileMenu.tsx`, 풀스크린 드롭다운 · body scroll lock · pathname 변경 시 자동 닫힘). 바텀 네비게이션은 채택하지 않음.
+  - PIN 분실 복구 (`/forgot-pin`, `/reset-pin/[token]`, `pinResetToken`/`pinResetExpires` 필드, 재설정 링크 1시간 유효)
+  - 내 접수 내역 "더 보기" (`src/components/my/OrdersLoadMore.tsx`, cursor 기반)
+  - 최소형 푸터 (`src/components/Footer.tsx`, shopPhone·shopAddress 표시)
+- **M2 일부 완료**
+  - Skeleton 로딩 UI (`(main)/loading.tsx`, `admin/orders/loading.tsx`, `login/loading.tsx`, `register/loading.tsx`)
+- **M3 일부 완료**
+  - 관리자 통계 인라인 카드 (`admin/orders` 상단 4종: 오늘 접수 · 접수대기 · 발송확인 · 작업중)
 
-### M2 · 사용자 경험 완성
-- 이메일 인증 (회원가입 — 현재 의도적 미구현, 진행 전 확인 필요)
-- 사용자 직접 접수 취소 (PENDING 상태 인라인 버튼 — 별도 페이지 X)
-- Skeleton 로딩 UI (`loading.tsx` 개선)
-- 어드민 패치노트 토스트 (진입 시 1회, 비침습적)
+### M2 · 사용자 경험 완성 (잔여)
+- 이메일 인증 (회원가입 — 현재 의도적 미구현, schema에 `emailVerified` 필드 없음. 진행 전 확인 필요)
+- 사용자 직접 접수 취소 (PENDING 상태 인라인 버튼 — 별도 페이지 X. 현재 `/api/orders/[id]` PATCH는 admin 전용)
+- 어드민 패치노트 토스트 (진입 시 1회, 비침습적. `PATCHNOTE.md`는 존재하나 UI 미연결)
 
-### M3 · 운영 효율화
-- 관리자 통계 (별도 페이지 X → 어드민 목록 상단 인라인 카드)
-- 스캔 파일 직접 업로드 (현재 외부 URL만 지원)
-- 택배사 운송장 자동 추적
+### M3 · 운영 효율화 (잔여)
+- 스캔 파일 직접 업로드 (현재 외부 URL 입력만 — `AdminOrderMeta.tsx`)
+- 택배사 운송장 자동 추적 (URL 매핑은 있으나 자동 동기화 없음)
 
 ### M4 · 스케일 (선택적)
 - 결제 연동 (토스페이먼츠)
