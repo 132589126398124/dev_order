@@ -51,11 +51,13 @@ export default async function MyOrdersPage() {
                   <div className="min-w-0">
                     <p className="font-mono font-bold text-slate-900 text-sm">{order.uniqueCode}</p>
                     <div className="mt-1 space-y-0.5">
-                      {items.map((item, i) => (
+                      {items.length > 0 ? items.map((item, i) => (
                         <p key={i} className="text-xs text-slate-500">
                           {item.filmType} · {item.format} · {item.quantity}롤 · {item.process}
                         </p>
-                      ))}
+                      )) : (
+                        <p className="text-xs text-slate-400">필름 정보 없음</p>
+                      )}
                     </div>
                     <p className="text-xs text-slate-400 mt-1.5">{format(order.createdAt, "yyyy.MM.dd HH:mm", { locale: ko })}</p>
                   </div>

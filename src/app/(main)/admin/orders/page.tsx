@@ -28,7 +28,8 @@ interface Props {
 
 export default async function AdminOrdersPage({ searchParams }: Props) {
   const session = await getSession();
-  if (!session?.isAdmin) redirect("/login");
+  if (!session) redirect("/login?next=/admin/orders");
+  if (!session.isAdmin) redirect("/my/orders");
 
   const { status, search, page: pageStr, date, dateFrom, dateTo, sort } = await searchParams;
   const page = parseInt(pageStr ?? "1");
