@@ -8,16 +8,18 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  username       String   @unique
-  pinHash        String
-  email          String   @unique
-  createdAt      DateTime @default(now())
-  orders         Order[]
-  profileName    String?
-  profilePhone   String?
-  profileEmail   String?
-  profileAddress String?
+  id                String    @id @default(cuid())
+  username          String    @unique
+  pinHash           String
+  email             String    @unique
+  createdAt         DateTime  @default(now())
+  orders            Order[]
+  profileName       String?
+  profilePhone      String?
+  profileEmail      String?
+  profileAddress    String?
+  pinResetToken     String?   @unique
+  pinResetExpires   DateTime?
 }
 
 model Order {
@@ -65,6 +67,9 @@ model ShopSettings {
   adminPinHash        String?
   resolutionConfig    Json     @default("{}")
   autoExpireDays      Int      @default(7)
+  shopRecipient       String?
+  shopAddress         String?
+  shopPhone           String?
   updatedAt           DateTime @updatedAt
 }
 

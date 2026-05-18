@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth";
 import Link from "next/link";
 import LogoutButton from "./LogoutButton";
+import NavbarMobileMenu from "./NavbarMobileMenu";
 import { SHOP_NAME } from "@/lib/shop";
 
 export default async function Navbar() {
@@ -13,7 +14,8 @@ export default async function Navbar() {
           {SHOP_NAME}
         </Link>
 
-        <nav className="flex items-center gap-1">
+        {/* 데스크톱 네비게이션 */}
+        <nav className="hidden md:flex items-center gap-1">
           <Link
             href="/order/new"
             className="text-sm font-medium bg-slate-900 text-white px-4 py-1.5 rounded-full hover:bg-slate-700 transition-colors"
@@ -65,6 +67,9 @@ export default async function Navbar() {
             </Link>
           )}
         </nav>
+
+        {/* 모바일 햄버거 메뉴 */}
+        <NavbarMobileMenu isAdmin={!!session?.isAdmin} isLoggedIn={!!session} />
       </div>
     </header>
   );

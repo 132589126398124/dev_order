@@ -135,6 +135,25 @@ export async function sendNewOrderNotification(
   });
 }
 
+export async function sendPinResetLink(email: string, username: string, resetToken: string) {
+  const link = `${APP_URL}/reset-pin/${resetToken}`;
+  if (!isEmailConfigured()) {
+    console.log(`[EMAIL SKIP] PIN reset link for ${email}: ${link}`);
+    return;
+  }
+  await getResend().emails.send({
+    from: process.env.EMAIL_FROM!,
+    to: email,
+    subject: `[${SHOP_NAME}] PIN 재설정 링크`,
+    html: emailWrapper(`
+      <p style="margin:0 0 16px">${escapeHtml(username)}님, 안녕하세요.</p>
+      <p style="margin:0 0 8px">PIN 재설정 링크입니다. <strong>1시간</strong> 이내에 사용해주세요.</p>
+      <p style="margin:0 0 16px;color:#64748b;font-size:13px">본인이 요청하지 않았다면 이 이메일을 무시해주세요.</p>
+      <a href="${link}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600">PIN 재설정하기</a>
+    `),
+  });
+}
+
 export async function sendOrderConfirmation(email: string, customerName: string, uniqueCode: string) {
   if (!isEmailConfigured()) {
     console.log(`[EMAIL SKIP] confirmation for ${email}, code: ${uniqueCode}`);

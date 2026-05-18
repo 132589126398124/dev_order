@@ -41,6 +41,24 @@ export async function PATCH(req: Request) {
   if (body.adminEmail !== undefined) data.adminEmail = body.adminEmail || null;
   if (body.resolutionConfig !== undefined) data.resolutionConfig = body.resolutionConfig;
   if (typeof body.autoExpireDays === "number" && body.autoExpireDays >= 1) data.autoExpireDays = Math.floor(body.autoExpireDays);
+  if (body.shopRecipient !== undefined) {
+    if (body.shopRecipient && (typeof body.shopRecipient !== "string" || body.shopRecipient.length > 100)) {
+      return NextResponse.json({ error: "받는분 이름은 100자 이하로 입력해주세요" }, { status: 400 });
+    }
+    data.shopRecipient = body.shopRecipient || null;
+  }
+  if (body.shopAddress !== undefined) {
+    if (body.shopAddress && (typeof body.shopAddress !== "string" || body.shopAddress.length > 300)) {
+      return NextResponse.json({ error: "주소는 300자 이하로 입력해주세요" }, { status: 400 });
+    }
+    data.shopAddress = body.shopAddress || null;
+  }
+  if (body.shopPhone !== undefined) {
+    if (body.shopPhone && (typeof body.shopPhone !== "string" || body.shopPhone.length > 50)) {
+      return NextResponse.json({ error: "연락처는 50자 이하로 입력해주세요" }, { status: 400 });
+    }
+    data.shopPhone = body.shopPhone || null;
+  }
 
   const raw = await prisma.shopSettings.upsert({
     where: { id: "singleton" },

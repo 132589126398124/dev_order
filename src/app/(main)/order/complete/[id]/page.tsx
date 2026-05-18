@@ -22,11 +22,17 @@ function maskEmail(email: string): string {
 
 export default async function CompletePage({ params }: Props) {
   const { id } = await params;
-  const [order, session] = await Promise.all([
+  const [order, session, shopInfo] = await Promise.all([
     prisma.order.findUnique({ where: { id } }),
     getSession(),
+    prisma.shopSettings.findUnique({
+      where: { id: "singleton" },
+      select: { shopRecipient: true, shopAddress: true, shopPhone: true },
+    }),
   ]);
   if (!order) notFound();
+
+  const hasShopAddress = shopInfo?.shopAddress || shopInfo?.shopRecipient || shopInfo?.shopPhone;
 
   const filmItems = (order.filmItems ?? []) as FilmItem[];
   const isOwner = session && (session.isAdmin || order.userId === session.userId);
@@ -92,6 +98,33 @@ export default async function CompletePage({ params }: Props) {
           </div>
         )}
       </div>
+
+      {/* 택배 보내실 곳 */}
+      {hasShopAddress && (
+        <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 mb-4">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">택배 보내실 곳</p>
+          <div className="space-y-1.5">
+            {shopInfo?.shopRecipient && (
+              <div className="flex gap-3 text-sm">
+                <span className="text-slate-400 shrink-0 w-14">받는분</span>
+                <span className="font-semibold text-slate-900">{shopInfo.shopRecipient}</span>
+              </div>
+            )}
+            {shopInfo?.shopPhone && (
+              <div className="flex gap-3 text-sm">
+                <span className="text-slate-400 shrink-0 w-14">연락처</span>
+                <span className="font-medium text-slate-900">{shopInfo.shopPhone}</span>
+              </div>
+            )}
+            {shopInfo?.shopAddress && (
+              <div className="flex gap-3 text-sm">
+                <span className="text-slate-400 shrink-0 w-14">주소</span>
+                <span className="font-medium text-slate-900 break-keep">{shopInfo.shopAddress}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 필름 발송 안내 */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 mb-4">

@@ -524,6 +524,43 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
         </div>
       </div>
 
+      {/* 택배 발송지 */}
+      <div className={cardCls}>
+        <div>
+          <h2 className="font-semibold text-slate-900">택배 발송지</h2>
+          <p className="text-xs text-slate-400 mt-0.5">접수 완료 페이지에 표시됩니다. 고객이 필름을 보낼 주소입니다.</p>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">받는분</label>
+            <input
+              value={s.shopRecipient ?? ""}
+              onChange={(e) => setS((p) => ({ ...p, shopRecipient: e.target.value || null }))}
+              placeholder="예: 홍길동 현상소"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">연락처</label>
+            <input
+              value={s.shopPhone ?? ""}
+              onChange={(e) => setS((p) => ({ ...p, shopPhone: e.target.value || null }))}
+              placeholder="예: 010-1234-5678"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">주소</label>
+            <input
+              value={s.shopAddress ?? ""}
+              onChange={(e) => setS((p) => ({ ...p, shopAddress: e.target.value || null }))}
+              placeholder="예: 서울 마포구 합정동 123-4 (우편번호 04045)"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* 알림 설정 */}
       <div className={cardCls}>
         <div>

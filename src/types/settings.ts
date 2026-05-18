@@ -37,6 +37,9 @@ export interface ShopSettings {
   adminEmail: string | null;
   resolutionConfig: ResolutionConfig;
   autoExpireDays: number;
+  shopRecipient: string | null;
+  shopAddress: string | null;
+  shopPhone: string | null;
 }
 
 export const DEFAULT_PRICING: PricingConfig = {
@@ -67,6 +70,9 @@ export function parseShopSettings(raw: {
   adminEmail: string | null;
   resolutionConfig: unknown;
   autoExpireDays: number;
+  shopRecipient?: string | null;
+  shopAddress?: string | null;
+  shopPhone?: string | null;
 }): ShopSettings {
   return {
     acceptPushPull: raw.acceptPushPull,
@@ -81,6 +87,9 @@ export function parseShopSettings(raw: {
     adminEmail: raw.adminEmail,
     resolutionConfig: (raw.resolutionConfig as ShopSettings["resolutionConfig"]) ?? DEFAULT_RESOLUTION_CONFIG,
     autoExpireDays: raw.autoExpireDays ?? 7,
+    shopRecipient: raw.shopRecipient ?? null,
+    shopAddress: raw.shopAddress ?? null,
+    shopPhone: raw.shopPhone ?? null,
   };
 }
 
@@ -97,4 +106,7 @@ export const DEFAULT_SETTINGS: ShopSettings = {
   adminEmail: null,
   resolutionConfig: DEFAULT_RESOLUTION_CONFIG,
   autoExpireDays: 7,
+  shopRecipient: null,
+  shopAddress: null,
+  shopPhone: null,
 };

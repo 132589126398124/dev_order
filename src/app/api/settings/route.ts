@@ -11,3 +11,4 @@ export async function GET() {
   settings.adminEmail = null;
   return NextResponse.json(settings);
 }
+

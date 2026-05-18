@@ -8,6 +8,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const justRegistered = searchParams.get("registered") === "1";
+  const justReset = searchParams.get("reset") === "1";
   const nextUrl = searchParams.get("next");
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
@@ -48,6 +49,11 @@ function LoginForm() {
           가입 완료! 아이디와 PIN으로 로그인해주세요
         </div>
       )}
+      {justReset && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-6 text-sm text-emerald-700">
+          PIN이 변경되었습니다. 새 PIN으로 로그인해주세요
+        </div>
+      )}
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
@@ -75,6 +81,7 @@ function LoginForm() {
 
       <div className="mt-6 space-y-2 text-center text-sm text-slate-400">
         <p>계정이 없으신가요? <Link href="/register" className="text-slate-700 font-medium hover:underline">회원가입</Link></p>
+        <p><Link href="/forgot-pin" className="hover:underline">PIN을 잊으셨나요?</Link></p>
         <p>비회원도 접수 가능 — <Link href="/order/new" className="hover:underline">접수 바로가기</Link></p>
       </div>
     </div>
