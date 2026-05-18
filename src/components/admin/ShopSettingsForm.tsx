@@ -535,6 +535,7 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
           <label className="text-xs text-slate-500 mb-1 block">관리자 알림 이메일</label>
           <input
             type="email"
+            autoComplete="off"
             value={s.adminEmail ?? ""}
             onChange={(e) => setS((p) => ({ ...p, adminEmail: e.target.value || null }))}
             placeholder="example@email.com"
