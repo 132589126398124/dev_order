@@ -48,7 +48,14 @@ CHANGELOG.md
 TODO.md
 NOTES.md
 PATCHNOTE.md
+QA_BUGS.md
+QA_IMPROVEMENTS.md
+
+# next-pwa generated service worker (regenerated on build)
+/public/sw.js
+/public/workbox-*.js
 
 # Claude Code
 .claude/settings.json
 .claude/settings.local.json
+.claude/agents/settings.json
