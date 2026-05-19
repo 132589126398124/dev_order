@@ -20,9 +20,6 @@ export default function FilmSearch({ id, value, onChange, onSelect, error }: Pro
   const results = searchFilms(value);
   const showDropdown = open && results.length > 0;
 
-  useEffect(() => {
-    setHighlighted(0);
-  }, [value]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -58,8 +55,12 @@ export default function FilmSearch({ id, value, onChange, onSelect, error }: Pro
       <input
         ref={inputRef}
         id={id}
+        role="combobox"
+        aria-expanded={showDropdown}
+        aria-controls="film-search-listbox"
+        aria-autocomplete="list"
         value={value}
-        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); setHighlighted(0); }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
         className={`w-full bg-slate-50 border rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:bg-white focus:border-slate-400 focus:outline-none transition-all placeholder:text-slate-400 ${
@@ -70,11 +71,13 @@ export default function FilmSearch({ id, value, onChange, onSelect, error }: Pro
       />
 
       {showDropdown && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+        <div id="film-search-listbox" role="listbox" className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
           {results.map((film, i) => (
             <button
               key={film.id}
               type="button"
+              role="option"
+              aria-selected={i === highlighted}
               onMouseDown={() => pick(film)}
               onMouseEnter={() => setHighlighted(i)}
               className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${

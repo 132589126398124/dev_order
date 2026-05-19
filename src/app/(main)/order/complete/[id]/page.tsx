@@ -90,7 +90,7 @@ export default async function CompletePage({ params }: Props) {
             <p className="text-xs text-slate-500 mb-2">필름 목록</p>
             <div className="space-y-1.5">
               {filmItems.map((item, i) => (
-                <div key={i} className="text-sm text-slate-700 bg-slate-50 rounded-xl px-3 py-2 truncate">
+                <div key={i} className="text-sm text-slate-700 bg-slate-50 rounded-xl px-3 py-2 break-keep">
                   {item.filmType} · {item.format} · {item.quantity}롤 · {item.process}
                 </div>
               ))}
@@ -101,7 +101,7 @@ export default async function CompletePage({ params }: Props) {
 
       {/* 택배 보내실 곳 */}
       {hasShopAddress && (
-        <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 mb-4">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 mb-4">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">택배 보내실 곳</p>
           <div className="space-y-1.5">
             {shopInfo?.shopRecipient && (
