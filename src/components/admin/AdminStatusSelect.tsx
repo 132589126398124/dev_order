@@ -60,7 +60,7 @@ export default function AdminStatusSelect({ orderId, currentStatus }: Props) {
 
   const confirmDone = () => {
     setPendingDone(false);
-    submitStatus("DONE", scanUrl);
+    submitStatus("DONE", scanUrl || undefined);
   };
 
   const confirmDestructive = () => {

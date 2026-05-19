@@ -21,23 +21,25 @@ export async function POST(req: NextRequest) {
   if (!pin || typeof pin !== "string" || pin.length !== 6 || !/^\d+$/.test(pin)) {
     return NextResponse.json({ error: "PIN은 숫자 6자리로 입력해주세요" }, { status: 400 });
   }
-  if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (email && (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
     return NextResponse.json({ error: "올바른 이메일을 입력해주세요" }, { status: 400 });
   }
 
+  const normalizedEmail = (email && typeof email === "string") ? email : null;
+
   const existing = await prisma.user.findFirst({
-    where: { OR: [{ username }, { email }] },
+    where: { OR: normalizedEmail ? [{ username }, { email: normalizedEmail }] : [{ username }] },
     select: { username: true, email: true },
   });
   if (existing?.username === username) {
     return NextResponse.json({ error: "이미 사용 중인 아이디입니다" }, { status: 409 });
   }
-  if (existing?.email === email) {
+  if (normalizedEmail && existing?.email === normalizedEmail) {
     return NextResponse.json({ error: "이미 사용 중인 이메일입니다" }, { status: 409 });
   }
 
   const pinHash = await hashPin(pin);
-  await prisma.user.create({ data: { username, pinHash, email } });
+  await prisma.user.create({ data: { username, pinHash, email: normalizedEmail } });
 
   return NextResponse.json({ ok: true });
 }

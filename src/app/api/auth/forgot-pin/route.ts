@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       where: { id: user.id },
       data: { pinResetToken: resetToken, pinResetExpires: resetExpires },
     });
-    await sendPinResetLink(user.email, user.username, resetToken).catch((e) =>
+    await sendPinResetLink(email, user.username, resetToken).catch((e) =>
       console.error("PIN reset email failed:", e)
     );
   }
