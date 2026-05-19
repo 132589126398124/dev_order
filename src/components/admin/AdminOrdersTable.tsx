@@ -29,6 +29,7 @@ export default function AdminOrdersTable({ orders, currentUrl }: { orders: Order
   const [batchScanUrls, setBatchScanUrls] = useState<Record<string, string>>({});
   const [applying, setApplying] = useState(false);
   const [batchError, setBatchError] = useState("");
+  const [confirmPending, setConfirmPending] = useState(false);
   const selectAllRef = useRef<HTMLInputElement>(null);
 
   const allSelected = orders.length > 0 && selected.size === orders.length;
@@ -46,7 +47,7 @@ export default function AdminOrdersTable({ orders, currentUrl }: { orders: Order
   const toggleOne = (id: string) =>
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
 
@@ -55,11 +56,12 @@ export default function AdminOrdersTable({ orders, currentUrl }: { orders: Order
   const applyBatch = async () => {
     if (applying || selected.size === 0) return;
 
-    if (DESTRUCTIVE_STATUSES.has(batchStatus)) {
-      const label = ORDER_STATUS_LABELS[batchStatus] ?? batchStatus;
-      if (!window.confirm(`선택된 ${selected.size}건을 [${label}] 처리합니다. 계속하시겠습니까?`)) return;
+    if (DESTRUCTIVE_STATUSES.has(batchStatus) && !confirmPending) {
+      setConfirmPending(true);
+      return;
     }
 
+    setConfirmPending(false);
     setBatchError("");
     setApplying(true);
     try {
@@ -192,7 +194,7 @@ export default function AdminOrdersTable({ orders, currentUrl }: { orders: Order
               <span className="text-xs text-slate-400 shrink-0">일괄 변경:</span>
               <select
                 value={batchStatus}
-                onChange={(e) => { setBatchStatus(e.target.value); setBatchScanUrls({}); }}
+                onChange={(e) => { setBatchStatus(e.target.value); setBatchScanUrls({}); setConfirmPending(false); }}
                 className="bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-slate-500 cursor-pointer"
               >
                 {Object.entries(ORDER_STATUS_LABELS).map(([val, label]) => (
@@ -212,12 +214,34 @@ export default function AdminOrdersTable({ orders, currentUrl }: { orders: Order
               )}
               <button
                 type="button"
-                onClick={() => setSelected(new Set())}
+                onClick={() => { setSelected(new Set()); setConfirmPending(false); }}
                 className="ml-auto text-slate-500 hover:text-slate-300 transition-colors text-xs shrink-0"
               >
                 선택 해제
               </button>
             </div>
+            {confirmPending && (
+              <div className="w-full border-t border-slate-700 pt-3 flex flex-wrap items-center gap-3">
+                <span className="text-xs text-amber-400 font-medium shrink-0">
+                  {selected.size}건을 [{ORDER_STATUS_LABELS[batchStatus] ?? batchStatus}] 처리합니다. 계속하시겠습니까?
+                </span>
+                <button
+                  type="button"
+                  onClick={applyBatch}
+                  disabled={applying}
+                  className="bg-red-500 text-white text-xs font-bold px-4 py-1.5 rounded-lg hover:bg-red-600 active:scale-95 transition-all disabled:opacity-50 shrink-0"
+                >
+                  확인
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmPending(false)}
+                  className="text-slate-400 hover:text-slate-200 text-xs shrink-0"
+                >
+                  취소
+                </button>
+              </div>
+            )}
 
             {/* Per-order scan URL inputs for DONE status */}
             {batchStatus === "DONE" && selectedOrders.length > 0 && (

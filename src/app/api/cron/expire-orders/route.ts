@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { subDays } from "date-fns";
 import { sendStatusNotification } from "@/lib/email";
+import { timingSafeStringEqual } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const authHeader = req.headers.get("authorization") ?? "";
+  if (!timingSafeStringEqual(authHeader, `Bearer ${process.env.CRON_SECRET ?? ""}`)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

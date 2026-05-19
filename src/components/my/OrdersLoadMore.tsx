@@ -15,15 +15,20 @@ export default function OrdersLoadMore({ initialOrders, initialCursor }: Props) 
   const [orders, setOrders] = useState(initialOrders);
   const [cursor, setCursor] = useState(initialCursor);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   const loadMore = async () => {
     if (!cursor || loading) return;
     setLoading(true);
+    setLoadError("");
     try {
       const res = await fetch(`/api/my/orders?cursor=${cursor}`);
+      if (!res.ok) { setLoadError("불러오기 실패. 다시 시도해주세요."); return; }
       const data = await res.json();
       setOrders((prev) => [...prev, ...data.orders]);
       setCursor(data.nextCursor);
+    } catch {
+      setLoadError("서버 연결 실패. 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }
@@ -63,6 +68,9 @@ export default function OrdersLoadMore({ initialOrders, initialCursor }: Props) 
         );
       })}
 
+      {loadError && (
+        <p className="text-center text-xs text-red-500 py-2">{loadError}</p>
+      )}
       {cursor && (
         <button
           onClick={loadMore}
