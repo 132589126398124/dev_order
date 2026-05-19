@@ -16,7 +16,7 @@ export default async function HomePage() {
           필름을 보내주세요.<br />
           <span className="text-slate-400">나머지는 저희가.</span>
         </h1>
-        <p className="text-slate-500 text-sm md:text-base whitespace-nowrap mx-auto mb-10">
+        <p className="text-slate-500 text-sm md:text-base sm:whitespace-nowrap mx-auto mb-10">
           온라인 접수 → 택배 발송 → 현상·스캔 → 반송
         </p>
 
@@ -73,7 +73,7 @@ export default async function HomePage() {
               className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] group hover:border-slate-200 hover:shadow-[0_4px_24px_rgba(0,0,0,0.08)] transition-all"
             >
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-2xl">{emoji}</span>
+                <span className="text-2xl" aria-hidden="true">{emoji}</span>
                 <span className="text-[10px] font-mono font-bold text-slate-300 tracking-widest">{num}</span>
               </div>
               <h3 className="font-semibold text-slate-900 mb-1.5 text-[15px]">{title}</h3>
@@ -83,7 +83,7 @@ export default async function HomePage() {
         </div>
 
         <div className="mt-4 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 flex items-center gap-3 text-sm text-slate-500">
-          <span className="text-base shrink-0">👤</span>
+          <span className="text-base shrink-0" aria-hidden="true">👤</span>
           <span>비회원도 접수 가능합니다 — 회원 가입 시 접수 내역을 언제든지 조회할 수 있어요.</span>
           {!session && (
             <Link href="/register" className="shrink-0 text-slate-900 font-semibold hover:underline underline-offset-2 ml-auto">

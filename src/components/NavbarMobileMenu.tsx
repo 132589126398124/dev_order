@@ -42,7 +42,7 @@ export default function NavbarMobileMenu({ isAdmin, isLoggedIn }: Props) {
 
       {open && (
         <div
-          className="md:hidden fixed inset-0 top-14 z-40"
+          className="md:hidden fixed inset-0 top-14 z-40 bg-black/20"
           onClick={() => setOpen(false)}
         >
           <div

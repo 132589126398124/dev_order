@@ -137,7 +137,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           <h1 className="text-2xl font-bold text-slate-900">접수 관리</h1>
           <p className="text-sm text-slate-500 mt-0.5">전체 {grandTotal}건</p>
         </div>
-        <Link href="/order/new" className="text-sm border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors">
+        <Link href="/order/new" className="text-sm bg-white text-slate-700 border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors">
           + 직접 접수
         </Link>
       </div>
@@ -175,7 +175,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       </div>
 
       {/* 날짜 필터 */}
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
+      <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-0.5 scrollbar-hide">
         <span className="text-xs text-slate-400 font-medium shrink-0">기간</span>
         {([
           { label: "전체", value: undefined },
@@ -186,7 +186,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           <Link
             key={label}
             href={buildHref({ status, search, date: value, sort })}
-            className={`text-xs px-3 py-1 rounded-full transition-colors font-medium ${
+            className={`shrink-0 text-xs px-3 py-1 rounded-full transition-colors font-medium ${
               isPresetActive(value)
                 ? "bg-slate-900 text-white"
                 : "bg-white border border-slate-200 text-slate-600 hover:border-slate-400"
@@ -202,7 +202,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       </div>
 
       {/* 상태 필터 탭 (카운트 포함) */}
-      <div className="flex gap-2 mb-4 flex-wrap">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-0.5 scrollbar-hide">
         {([undefined, "PENDING", "SHIPPED", "PROCESSING", "DONE", "EXPIRED", "CANCELLED"] as const).map((s) => {
           const count = s ? (statusCounts[s] ?? 0) : grandTotal;
           const active = status === s || (!status && !s);
@@ -210,7 +210,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
             <Link
               key={s ?? "all"}
               href={buildHref({ status: s, search, date, dateFrom, dateTo, sort })}
-              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors font-medium ${
+              className={`shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors font-medium ${
                 active
                   ? "bg-slate-900 text-white"
                   : "bg-white border border-slate-200 text-slate-600 hover:border-slate-400"

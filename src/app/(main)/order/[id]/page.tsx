@@ -52,7 +52,7 @@ export default async function OrderDetailPage({ params }: Props) {
     <main className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
-          <Link href={session?.isAdmin ? "/admin/orders" : "/my/orders"} className="text-xs text-slate-400 hover:text-slate-600 mb-2 flex items-center gap-1">
+          <Link href={session?.isAdmin ? "/admin/orders" : "/my/orders"} className="text-xs text-slate-400 hover:text-slate-600 mb-2 flex items-center gap-1 py-2 -my-2 px-1 -mx-1">
             ← 목록으로
           </Link>
           <h1 className="text-xl font-bold text-slate-900 font-mono">{order.uniqueCode}</h1>
@@ -62,7 +62,7 @@ export default async function OrderDetailPage({ params }: Props) {
           {session?.isAdmin ? (
             <AdminStatusSelect orderId={order.id} currentStatus={order.status} />
           ) : (
-            <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${ORDER_STATUS_COLORS[order.status]}`}>
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ORDER_STATUS_COLORS[order.status]}`}>
               {ORDER_STATUS_LABELS[order.status]}
             </span>
           )}
@@ -83,7 +83,7 @@ export default async function OrderDetailPage({ params }: Props) {
                 href={trackingUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="shrink-0 bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
+                className="shrink-0 bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-xl hover:bg-slate-800 transition-colors"
               >
                 배송 조회
               </a>

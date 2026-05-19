@@ -24,7 +24,7 @@ export default async function AdminSettingsPage() {
         </div>
         <Link
           href="/admin/orders"
-          className="text-sm border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors"
+          className="text-sm bg-white text-slate-700 border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors"
         >
           접수 관리
         </Link>

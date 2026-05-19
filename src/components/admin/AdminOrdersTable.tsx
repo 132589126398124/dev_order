@@ -111,7 +111,7 @@ export default function AdminOrdersTable({ orders, currentUrl }: { orders: Order
                   />
                 </th>
                 {["고유코드", "고객명", "연락처", "필름", "수령", "접수일", "상태", ""].map((h) => (
-                  <th key={h} className="text-left text-xs font-medium text-slate-500 px-4 py-3 whitespace-nowrap">{h}</th>
+                  <th key={h} scope="col" className="text-left text-xs font-medium text-slate-500 px-4 py-3 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>

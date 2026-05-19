@@ -637,7 +637,7 @@ export default function ShopSettingsForm({ initialSettings }: { initialSettings:
           type="button"
           onClick={changePin}
           disabled={pinSaving || !pinForm.current || !pinForm.next || !pinForm.confirm}
-          className="w-full bg-slate-800 text-white py-2.5 rounded-xl font-medium hover:bg-slate-700 active:scale-95 disabled:opacity-40 transition-all text-sm"
+          className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-medium hover:bg-slate-800 active:scale-95 disabled:opacity-40 transition-all text-sm"
         >
           {pinSaving ? "변경 중..." : "PIN 변경"}
         </button>
